@@ -27,48 +27,101 @@ namespace ns3
 {
 
 NS_LOG_COMPONENT_DEFINE("Mac8Address");
+//ATTRIBUTE_HELPER_CPP(Mac8Address);
+
+#define ASCII_a (0x41)
+#define ASCII_z (0x5a)
+#define ASCII_A (0x61)
+#define ASCII_Z (0x7a)
+#define ASCII_COLON (0x3a)
+#define ASCII_ZERO (0x30)
+
+/**
+ * Converts a char to lower case.
+ * \param c the char
+ * \returns the lower case
+ */
+static char
+AsciiToLowCase(char c)
+{
+    NS_LOG_FUNCTION(c);
+    if (c >= ASCII_a && c <= ASCII_z)
+    {
+        return c;
+    }
+    else if (c >= ASCII_A && c <= ASCII_Z)
+    {
+        return c + (ASCII_a - ASCII_A);
+    }
+    else
+    {
+        return c;
+    }
+}
 
 uint8_t Mac8Address::m_allocationIndex = 0;
 
 Mac8Address::Mac8Address()
 {
-    m_address = 255;
+    NS_LOG_FUNCTION(this);
+    std::memset(&m_address, 0, 1);
 }
 
 Mac8Address::Mac8Address(uint8_t addr)
-    : m_address(addr)
+    :m_address(addr)
 {
 }
 
-Mac8Address::~Mac8Address()
+Mac8Address::Mac8Address(const char* str)
 {
+    NS_LOG_FUNCTION(this << str);
+    int i = 0;
+    while (*str != 0 && i < 1)
+    {
+        uint8_t byte = 0;
+        while (*str != ASCII_COLON && *str != 0)
+        {
+            byte <<= 4;
+            char low = AsciiToLowCase(*str);
+            if (low >= ASCII_a)
+            {
+                byte |= low - ASCII_a + 10;
+            }
+            else
+            {
+                byte |= low - ASCII_ZERO;
+            }
+            str++;
+        }
+        m_address = byte;
+        i++;
+        if (*str == 0)
+        {
+            break;
+        }
+        str++;
+    }
+    NS_ASSERT(i == 1);
 }
 
-uint8_t
-Mac8Address::GetType()
+void
+Mac8Address::CopyFrom(const uint8_t* pBuffer)
 {
-    static uint8_t type = Address::Register();
-    return type;
+    NS_LOG_FUNCTION(this << &pBuffer);
+    m_address = *pBuffer;
 }
 
-Address
-Mac8Address::ConvertTo() const
+void
+Mac8Address::CopyTo(uint8_t* pBuffer) const
 {
-    return Address(GetType(), &m_address, 1);
-}
-
-Mac8Address
-Mac8Address::ConvertFrom(const Address& address)
-{
-    NS_ASSERT(IsMatchingType(address));
-    Mac8Address uAddr;
-    address.CopyTo(&uAddr.m_address);
-    return uAddr;
+    NS_LOG_FUNCTION(this << &pBuffer);
+    *pBuffer = m_address;
 }
 
 bool
 Mac8Address::IsMatchingType(const Address& address)
 {
+    NS_LOG_FUNCTION(&address);
     return address.CheckCompatible(GetType(), 1);
 }
 
@@ -77,22 +130,21 @@ Mac8Address::operator Address() const
     return ConvertTo();
 }
 
-void
-Mac8Address::CopyFrom(const uint8_t* pBuffer)
-{
-    m_address = *pBuffer;
-}
-
-void
-Mac8Address::CopyTo(uint8_t* pBuffer) const
-{
-    *pBuffer = m_address;
-}
-
 Mac8Address
-Mac8Address::GetBroadcast()
+Mac8Address::ConvertFrom(const Address& address)
 {
-    return Mac8Address(255);
+    NS_ASSERT(IsMatchingType(address));
+    NS_ASSERT(address.CheckCompatible(GetType(), 1));
+    Mac8Address retval;
+    address.CopyTo(&retval.m_address);
+    return retval;
+}
+
+Address
+Mac8Address::ConvertTo() const
+{
+    NS_LOG_FUNCTION(this);
+    return Address(GetType(), &m_address, 1);
 }
 
 Mac8Address
@@ -105,21 +157,38 @@ Mac8Address::Allocate()
         Simulator::ScheduleDestroy(Mac8Address::ResetAllocationIndex);
     }
 
-    uint8_t address = m_allocationIndex++;
+    m_allocationIndex++;
+    Mac8Address address;
+    address.m_address = m_allocationIndex;
     if (m_allocationIndex == 255)
     {
         m_allocationIndex = 0;
     }
 
-    return Mac8Address(address);
+    return address;
 }
 
 void
 Mac8Address::ResetAllocationIndex()
 {
     NS_LOG_FUNCTION_NOARGS();
-
     m_allocationIndex = 0;
+}
+
+uint8_t
+Mac8Address::GetType()
+{
+    NS_LOG_FUNCTION_NOARGS();
+    static uint8_t type = Address::Register();
+    return type;
+}
+
+Mac8Address
+Mac8Address::GetBroadcast()
+{
+    NS_LOG_FUNCTION_NOARGS();
+    static Mac8Address broadcast = Mac8Address("ff");
+    return broadcast;
 }
 
 bool

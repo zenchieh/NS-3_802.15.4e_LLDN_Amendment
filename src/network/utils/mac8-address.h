@@ -45,14 +45,12 @@ class Mac8Address
   public:
     /** Constructor */
     Mac8Address();
-    /**
-     * Create Mac8Address object with address addr.
-     *
-     * \param addr Byte address to assign to this address.
-     */
     Mac8Address(uint8_t addr);
-    /** Destructor */
-    virtual ~Mac8Address();
+    /**
+     * \param str a string representing the new Mac8Address
+     *
+     */
+    Mac8Address(const char* str);
 
     /**
      * Convert a generic address to a Mac8Address.
@@ -124,8 +122,6 @@ class Mac8Address
     static void ResetAllocationIndex();
 
   private:
-    static uint8_t m_allocationIndex; //!< Address allocation index
-    uint8_t m_address;                //!< The address.
 
     /**
      * Get the Mac8Address type.
@@ -145,6 +141,9 @@ class Mac8Address
     friend bool operator!=(const Mac8Address& a, const Mac8Address& b);
     friend std::ostream& operator<<(std::ostream& os, const Mac8Address& address);
     friend std::istream& operator>>(std::istream& is, Mac8Address& address);
+
+    static uint8_t m_allocationIndex; //!< Address allocation index
+    uint8_t m_address;                //!< The address.
 
 }; // class Mac8Address
 

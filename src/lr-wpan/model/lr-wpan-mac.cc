@@ -437,11 +437,13 @@ LrWpanMac::McpsDataRequest(McpsDataRequestParams params, Ptr<Packet> p)
     }
 
     macHdr.SetSecDisable();
-    // extract the first 3 bits in TxOptions
-    int b0 = params.m_txOptions & TX_OPTION_ACK;
-    int b1 = params.m_txOptions & TX_OPTION_GTS;
-    int b2 = params.m_txOptions & TX_OPTION_INDIRECT;
 
+    // extract the first 3 bits in TxOptions
+    int b0 = params.m_txOptions & TX_OPTION_ACK;        // bit0, 1 for ACK
+    int b1 = params.m_txOptions & TX_OPTION_GTS;        // bit1, 1 for GTS transmission, 0 for CAP transmission
+    int b2 = params.m_txOptions & TX_OPTION_INDIRECT;   // bit2, 1 for indirect transmission, 0 for direct transmission 
+
+    // process b0 in TX_OPTION for ACK action
     if (b0 == TX_OPTION_ACK)
     {
         // Set AckReq bit only if the destination is not the broadcast address.
@@ -473,6 +475,7 @@ LrWpanMac::McpsDataRequest(McpsDataRequestParams params, Ptr<Packet> p)
         macHdr.SetNoAckReq();
     }
 
+    // process b1 in TX_OPTION for GTS action / CAP action
     if (b1 == TX_OPTION_GTS)
     {
         // TODO:GTS Transmission
@@ -508,8 +511,8 @@ LrWpanMac::McpsDataRequest(McpsDataRequestParams params, Ptr<Packet> p)
     }
     else
     {
-        // Direct Tx
-        // From this point the packet will be pushed to a Tx queue and immediately
+        // Direct Tx (default setting)
+        //! From this point the packet will be pushed to a Tx queue and immediately
         // use a slotted (beacon-enabled) or unslotted (nonbeacon-enabled) version of CSMA/CA
         // before sending the packet, depending on whether it has previously
         // received a valid beacon or not.
