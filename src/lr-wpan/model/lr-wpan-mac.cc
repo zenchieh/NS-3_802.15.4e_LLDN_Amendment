@@ -378,7 +378,8 @@ LrWpanMac::McpsDataRequest(McpsDataRequestParams params, Ptr<Packet> p)
         macHdr.SetSrcAddrMode(params.m_srcAddrMode);
         macHdr.SetNoPanIdComp();
         break;
-    case ADDR_MODE_RESERVED:
+    case SIMPLE_ADDR:
+        // TODO : LLDN mode
         NS_ABORT_MSG("Can not set source address type to ADDR_MODE_RESERVED. Aborting.");
         break;
     case SHORT_ADDR:
@@ -405,7 +406,8 @@ LrWpanMac::McpsDataRequest(McpsDataRequestParams params, Ptr<Packet> p)
         macHdr.SetDstAddrMode(params.m_dstAddrMode);
         macHdr.SetNoPanIdComp();
         break;
-    case ADDR_MODE_RESERVED:
+    case SIMPLE_ADDR:
+        // TODO : LLDN mode
         NS_ABORT_MSG("Can not set destination address type to ADDR_MODE_RESERVED. Aborting.");
         break;
     case SHORT_ADDR:
@@ -2863,7 +2865,7 @@ LrWpanMac::PdDataConfirm(LrWpanPhyEnumeration status)
                         break;
                     case CommandPayloadHeader::ACCESS_DENIED:
                         confirmParams.m_status =
-                            LrWpanMlmeAssociateConfirmStatus::MLMEASSOC_ACCESS_DENIED;
+                            LrWpanMlmeAssociateConfirmStatus::MLMEASSOC_CHANNEL_ACCESS_FAILURE;
                         m_macPanId = 0xffff;
                         m_macCoordShortAddress = Mac16Address("FF:FF");
                         m_macCoordExtendedAddress = Mac64Address("ff:ff:ff:ff:ff:ff:ff:ed");

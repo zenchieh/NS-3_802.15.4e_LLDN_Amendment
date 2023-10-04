@@ -166,14 +166,11 @@ typedef enum
  */
 typedef enum
 {
-    ASSOCIATED                          = 0x00,
-    PAN_AT_CAPACITY                     = 0x01,
-    PAN_ACCESS_DENIED                   = 0x02,
-    HOPPING_SEQ_OFS_DUPLICATION         = 0x03,
-    ASSOCIATION_STATUS_FIELD_RESERVED   = 0x04,
-    FASTA_SUCCESSFUL                    = 0x80,
-    ASSOCIATED_WITHOUT_ADDRESS          = 0xfe,
-    DISASSOCIATED                       = 0xff
+    ASSOCIATED = 0,
+    PAN_AT_CAPACITY = 1,
+    PAN_ACCESS_DENIED = 2,
+    ASSOCIATED_WITHOUT_ADDRESS = 0xfe,
+    DISASSOCIATED = 0xff
 } LrWpanAssociationStatus;
 
 /**
@@ -196,7 +193,7 @@ typedef enum
 /**
  * \ingroup lr-wpan
  *
- * Table 42 of 802.15.4-2006
+ * Table 42 of 802.15.4-2006 & Table 47 of 802.15.4e-2012 (Amendment)
  */
 typedef enum
 {
@@ -211,7 +208,8 @@ typedef enum
     IEEE_802_15_4_FRAME_TOO_LONG = 8,
     IEEE_802_15_4_UNAVAILABLE_KEY = 9,
     IEEE_802_15_4_UNSUPPORTED_SECURITY = 10,
-    IEEE_802_15_4_INVALID_PARAMETER = 11
+    IEEE_802_15_4_INVALID_PARAMETER = 11,
+    IEEE_802_15_4_ACK_RCVD_NODSN_NOSA = 12
 } LrWpanMcpsDataConfirmStatus;
 
 /**
@@ -236,7 +234,7 @@ typedef enum
 /**
  * \ingroup lr-wpan
  *
- * Table 31 of IEEE 802.15.4-2011
+ * Table 31 of IEEE 802.15.4-2011 & Table 31 of IEEE 802.15.4e-2012 (Amendment)
  */
 typedef enum
 {
@@ -248,7 +246,8 @@ typedef enum
     MLMESCAN_FRAME_TOO_LONG = 5,
     MLMESCAN_UNAVAILABLE_KEY = 6,
     MLMESCAN_UNSUPPORTED_SECURITY = 7,
-    MLMESCAN_INVALID_PARAMETER = 8
+    MLMESCAN_BAD_CHANNEL = 8,
+    MLMESCAN_INVALID_PARAMETER = 9
 } LrWpanMlmeScanConfirmStatus;
 
 /**
@@ -258,16 +257,25 @@ typedef enum
  */
 typedef enum
 {
-    MLMEASSOC_SUCCESS = 0,
-    MLMEASSOC_FULL_CAPACITY = 1,
-    MLMEASSOC_ACCESS_DENIED = 2,
-    MLMEASSOC_CHANNEL_ACCESS_FAILURE = 3,
-    MLMEASSOC_NO_ACK = 4,
-    MLMEASSOC_NO_DATA = 5,
-    MLMEASSOC_COUNTER_ERROR = 6,
-    MLMEASSOC_FRAME_TOO_LONG = 7,
-    MLMEASSOC_UNSUPPORTED_LEGACY = 8,
-    MLMEASSOC_INVALID_PARAMETER = 9
+    MLMEASSOC_SUCCESS                   = 0,
+    MLMEASSOC_FULL_CAPACITY             = 1,
+    MLMEASSOC_CHANNEL_ACCESS_FAILURE    = 2,
+    MLMEASSOC_NO_ACK                    = 3,
+    MLMEASSOC_NO_DATA                   = 4,
+    MLMEASSOC_COUNTER_ERROR             = 5,
+    MLMEASSOC_FRAME_TOO_LONG            = 6,
+    MLMEASSOC_IMPROPER_KEY_TYPE         = 7,
+    MLMEASSOC_IMPROPER_SECURITY_LEVEL   = 8,
+    MLMEASSOC_SECURITY_ERROR            = 9,
+    MLMEASSOC_UNAVAILABLE_KEY           = 10,
+
+    // MLMEASSOC_FULL_CAPACITY = 1,
+    // MLMEASSOC_ACCESS_DENIED = 2,
+
+    MLMEASSOC_UNSUPPORTED_LEGACY        = 11,
+    MLMEASSOC_UNSUPPORTED_SECURITY      = 12,
+    MLMEASSOC_UNSUPPORTED_FEATURE       = 13,
+    MLMEASSOC_INVALID_PARAMETER         = 14
 } LrWpanMlmeAssociateConfirmStatus;
 
 /**
@@ -348,7 +356,7 @@ struct PanDescriptor
 /**
  * \ingroup lr-wpan
  *
- * MCPS-DATA.request params. See 7.1.1.1
+ * MCPS-DATA.request params. See 802.15.4-2011 Section 6.3.1 and 802.15.4e-2012 Section 6.3.1
  */
 struct McpsDataRequestParams
 {
@@ -364,11 +372,20 @@ struct McpsDataRequestParams
 /**
  * \ingroup lr-wpan
  *
- * MCPS-DATA.confirm params. See 7.1.1.2
+ * MCPS-DATA.confirm params. See 802.15.4e-2012 and 802.15.4-2011 Section 6.3.2, Table 47
  */
 struct McpsDataConfirmParams
 {
     uint8_t m_msduHandle{0}; //!< MSDU handle
+    Time m_timestamp;    
+    bool m_rangingReceived;
+    uint32_t m_rangingCntStart;
+    uint32_t m_rangingCntStop;
+    int32_t m_rangingTrackingInterval;
+    int32_t m_rangingOfs;
+    int8_t m_rangingFOM;
+    uint8_t m_numBackoffs;
+    std::vector<uint8_t> m_ackPayload;
     LrWpanMcpsDataConfirmStatus m_status{
         IEEE_802_15_4_INVALID_PARAMETER}; //!< The status of the last MSDU transmission
 };
@@ -376,38 +393,70 @@ struct McpsDataConfirmParams
 /**
  * \ingroup lr-wpan
  *
- * MCPS-DATA.indication params. See 7.1.1.3
+ * MCPS-DATA.indication params. 802.15.4e-2012 and 802.15.4-2011 Section 6.3.3
  */
 struct McpsDataIndicationParams
 {
     uint8_t m_srcAddrMode{SHORT_ADDR}; //!< Source address mode
     uint16_t m_srcPanId{0};            //!< Source PAN identifier
+    Mac8Address m_srcSimpleAddr;       //!< Source simple address
     Mac16Address m_srcAddr;            //!< Source address
     Mac64Address m_srcExtAddr;         //!< Source extended address
+
     uint8_t m_dstAddrMode{SHORT_ADDR}; //!< Destination address mode
     uint16_t m_dstPanId{0};            //!< Destination PAN identifier
+    Mac8Address m_dstSimpleAddr;       //!< Destination simple address
     Mac16Address m_dstAddr;            //!< Destination address
     Mac64Address m_dstExtAddr;         //!< Destination extended address
+
+    // msduLength
+    // msdu
+
     uint8_t m_mpduLinkQuality{0};      //!< LQI value measured during reception of the MPDU
     uint8_t m_dsn{0};                  //!< The DSN of the received data frame
+    Time m_timestamp;
+
+    // SecurityLevel,
+    // KeyIdMode,
+    // KeySource,
+    // KeyIndex
+    // UWBPRF
+    // UWBPreamble Symbol Repetitions
+    uint8_t m_dataRate;
+    
+    bool m_rangingReceived;
+    uint32_t m_rangingCntStart;
+    uint32_t m_rangingCntStop;
+    int32_t m_rangingTrackingInterval;
+    int32_t m_rangingOfs;
+    int8_t m_rangingFOM;
 };
 
 /**
  * \ingroup lr-wpan
  *
- * MLME-ASSOCIATE.indication params. See 802.15.4-2011 6.2.2.2.
+ * MLME-ASSOCIATE.indication params. See 802.15.4-2011 and 802.15.4e-2012 6.2.2.2.
  */
 struct MlmeAssociateIndicationParams
 {
     Mac64Address m_extDevAddr; //!< The extended address of the device requesting association
     CapabilityField
         capabilityInfo; //!< The operational capabilities of the device requesting association.
+    
+    // SecurityLevel,
+    // KeyIdMode,
+    // KeySource,
+    // KeyIndex,
+    // LowLatencyNetworkInfo,
+
+    uint16_t m_channelOfs;
+    uint8_t m_hoppingSeqID;
 };
 
 /**
  * \ingroup lr-wpan
  *
- * MLME-ASSOCIATE.response params. See 802.15.4-2011 6.2.2.3.
+ * MLME-ASSOCIATE.response params. See 802.15.4-2011 and 802.15.4e-2012 6.2.2.3.
  */
 struct MlmeAssociateResponseParams
 {
@@ -450,9 +499,13 @@ struct MlmeStartRequestParams
 struct MlmeSyncRequestParams
 {
     uint8_t m_logCh{11};    //!< The channel number on which to attempt coordinator synchronization.
+    uint32_t m_logChPage{0};    //!< The channel page on which to attempt coordinator synchronization.
     bool m_trackBcn{false}; //!< True if the mlme sync with the next beacon and attempts to track
                             //!< future beacons. False if mlme sync only the next beacon.
 };
+
+
+// 6.2.14 Primitives for requesting data from a coordinator
 
 /**
  * \ingroup lr-wpan
@@ -550,14 +603,20 @@ struct MlmeStartConfirmParams
 /**
  * \ingroup lr-wpan
  *
- * MLME-BEACON-NOTIFY.indication params. See  802.15.4-2011   Section 6.2.4.1, Table 16
+ * MLME-BEACON-NOTIFY.indication params. See  802.15.4-2011 and 802.15.4e-2012   Section 6.2.4.1, Table 16
  */
 struct MlmeBeaconNotifyIndicationParams
 {
     uint8_t m_bsn{0};              //!< The beacon sequence number.
     PanDescriptor m_panDescriptor; //!< The PAN descriptor for the received beacon.
+    PendingAddrFields m_pendAddrSpec;       //!< The beacon pending address specification.
+    std::vector<Mac64Address> m_addrList;   //!< The addresses of the devices for which
+                                            //!< the beacon source has data.
     uint32_t m_sduLength{0};       //!< The number of octets contained in the beacon payload.
     Ptr<Packet> m_sdu;             //!< The set of octets comprising the beacon payload.
+
+    uint8_t m_ebsn{0};                      //!< Beacon sequence number used for enhanced beacon frames
+    bool m_beaconType{0};                   //!< Indicates a beacon (0x00) or enhanced beacon (0x01) was received
 };
 
 /**
@@ -595,6 +654,36 @@ struct MlmeCommStatusIndicationParams
     Mac64Address
         m_dstExtAddr; //!< The extended address of the device for which the frame was intended.
     LrWpanMlmeCommStatus m_status{MLMECOMMSTATUS_INVALID_PARAMETER}; //!< The communication status
+};
+
+/**
+ * \ingroup lr-wpan
+ * 
+ * MLME-ORPHAN.indication params. See 802.15.4-2011 Section 6.2.7.1
+ */
+struct MlmeOrphanIndicationPararms {
+    Mac64Address m_orphanAddress;
+
+    // SecurityLevel,
+    // KeyIdMode,
+    // KeySource,
+    // KeyIndex    
+};
+
+/**
+ * \ingroup lr-wpan
+ * 
+ * MLME-ORPHAN.reponse params. See 802.15.4-2011 Section 6.2.7.2
+ */
+struct MlmeOrphanResponsePararms {
+    Mac64Address m_orphanAddress;
+    Mac16Address m_shortAddr;
+    bool m_associateMember;
+
+    // SecurityLevel,
+    // KeyIdMode,
+    // KeySource,
+    // KeyIndex    
 };
 
 /**
@@ -783,6 +872,21 @@ class LrWpanMac : public Object
      * \param rxOnWhenIdle set to true to enable the receiver during idle periods
      */
     void SetRxOnWhenIdle(bool rxOnWhenIdle);
+    
+    // XXX these setters will become obsolete if we use the attribute system
+    /**
+     * Set the simple address of this MAC.
+     *
+     * \param address the new address
+     */
+    void SetSimpleAddress(Mac8Address address);
+
+    /**
+     * Get the simple address of this MAC.
+     *
+     * \return the simple address
+     */
+    Mac8Address GetSimpleAddress() const; 
 
     // XXX these setters will become obsolete if we use the attribute system
     /**
@@ -1104,6 +1208,18 @@ class LrWpanMac : public Object
      * \param status new association status
      */
     void SetAssociationStatus(LrWpanAssociationStatus status);
+
+    /**
+     * Set the coordinator does allow end device associate with it
+     *
+     */
+    void SetAssociatePermit();
+
+    /**
+     * Set the coordinator does not allow end device associate with it
+     *
+     */
+    void SetAssociateNotPermit();
 
     /**
      * Set the max size of the transmit queue.
@@ -1947,6 +2063,11 @@ class LrWpanMac : public Object
      * that take place after ACK messages.
      */
     Ptr<Packet> m_rxPkt;
+
+    /**
+     * The simple address used by this MAC. 
+     */
+    Mac8Address m_simpleAddress;
 
     /**
      * The short address used by this MAC. Currently we do not have complete
