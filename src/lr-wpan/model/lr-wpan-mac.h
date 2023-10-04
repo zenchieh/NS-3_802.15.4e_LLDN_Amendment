@@ -58,10 +58,11 @@ class LrWpanCsmaCa;
  */
 typedef enum
 {
-    TX_OPTION_NONE = 0,    //!< TX_OPTION_NONE
-    TX_OPTION_ACK = 1,     //!< TX_OPTION_ACK
-    TX_OPTION_GTS = 2,     //!< TX_OPTION_GTS
-    TX_OPTION_INDIRECT = 4 //!< TX_OPTION_INDIRECT
+    TX_OPTION_NONE = 0,     //!< TX_OPTION_NONE
+    TX_OPTION_ACK = 1,      //!< TX_OPTION_ACK
+    TX_OPTION_GTS = 2,      //!< TX_OPTION_GTS
+    TX_OPTION_INDIRECT = 4, //!< TX_OPTION_INDIRECT
+    TX_OPTION_DIRECT = 8    //!< TX_OPTION_DIRECT
 } LrWpanTxOption;
 
 /**
@@ -147,12 +148,13 @@ typedef void (*SuperframeStatus)(SuperframeStatus oldValue, SuperframeStatus new
 /**
  * \ingroup lr-wpan
  *
- * table 80 of 802.15.4
+ * table 80 of 802.15.4 & Table 3 of 802.15.4e-2012 (p.62)
  */
 typedef enum
 {
     NO_PANID_ADDR = 0,
-    ADDR_MODE_RESERVED = 1,
+    //ADDR_MODE_RESERVED = 1,
+    SIMPLE_ADDR = 1,    //! For 802.15.4e amendment, LLDN feature using 8-bit simple address
     SHORT_ADDR = 2,
     EXT_ADDR = 3
 } LrWpanAddressMode;
@@ -160,28 +162,35 @@ typedef enum
 /**
  * \ingroup lr-wpan
  *
- * table 83 of 802.15.4
+ * table 83 of 802.15.4 (Original) & See 802.15.4e-2012 Section 5.3.2.3 Table 6 (Amendment)
  */
 typedef enum
 {
-    ASSOCIATED = 0,
-    PAN_AT_CAPACITY = 1,
-    PAN_ACCESS_DENIED = 2,
-    ASSOCIATED_WITHOUT_ADDRESS = 0xfe,
-    DISASSOCIATED = 0xff
+    ASSOCIATED                          = 0x00,
+    PAN_AT_CAPACITY                     = 0x01,
+    PAN_ACCESS_DENIED                   = 0x02,
+    HOPPING_SEQ_OFS_DUPLICATION         = 0x03,
+    ASSOCIATION_STATUS_FIELD_RESERVED   = 0x04,
+    FASTA_SUCCESSFUL                    = 0x80,
+    ASSOCIATED_WITHOUT_ADDRESS          = 0xfe,
+    DISASSOCIATED                       = 0xff
 } LrWpanAssociationStatus;
 
 /**
  * \ingroup lr-wpan
  *
- * Table 30 of IEEE 802.15.4-2011
+ * Table 30 of IEEE 802.15.4-2011 (Original) & See Section 5.1.2.1 Table 30 of IEEE 802.15.4e-2012 (Amendment)
  */
 typedef enum
 {
     MLMESCAN_ED = 0x00,
     MLMESCAN_ACTIVE = 0x01,
     MLMESCAN_PASSIVE = 0x02,
-    MLMESCAN_ORPHAN = 0x03
+    MLMESCAN_ORPHAN = 0x03,
+    MLMESCAN_ASYMMETRIC_MULTICHANNEL_ACTIVE  = 0x04,
+    MLMESCAN_CHANNEL_PROBE                   = 0x05,
+    MLMESCAN_MULTICHANNEL_HELLO              = 0x06,
+    MLMESCAN_ENHANCED_ACTIVE_SCAN            = 0x07
 } LrWpanMlmeScanType;
 
 /**
