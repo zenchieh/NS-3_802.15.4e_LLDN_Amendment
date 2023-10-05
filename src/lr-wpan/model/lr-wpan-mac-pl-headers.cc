@@ -21,6 +21,8 @@
 
 #include <ns3/address-utils.h>
 #include <ns3/simulator.h>
+#include <ns3/log.h>
+
 
 namespace ns3
 {
@@ -161,7 +163,7 @@ CommandPayloadHeader::GetInstanceTypeId() const
 uint32_t
 CommandPayloadHeader::GetSerializedSize() const
 {
-    uint32_t size = 1;
+    uint32_t size = 1; // Command frame identifier
     // TODO: add missing serialize commands size when other commands are added.
     switch (m_cmdFrameId)
     {
@@ -186,6 +188,82 @@ CommandPayloadHeader::GetSerializedSize() const
     case GTS_REQ:
         break;
     case CMD_RESERVED:
+        break;
+    // TODO : Add LLDN and DSME amendment
+    case LL_DISCOVER_RESP:
+        // TODO : need to pass Discovery parameters to get length
+        NS_LOG_UNCOND("GetSerializedSize() case LL_CONFIGURATON_REQ");
+        // TODO - need to calculate timeslot length
+        /**
+         * Coordinator discover response command
+         * See 802.15.4e-2011 Section 5.3.10.1.4
+         *      MHR         - Command Frame Identifier - //?Discovery parameters
+         * Variable Octets  -            1             -   Variable Octets        
+         *? Discovery parameters
+         *  Full MAC address - Required timeslot duration - Uplink/bidirectional type indicator
+         *          1        -              1             -                 1
+         */
+        size += 1 + 1 + 1;
+        break;
+    case LL_CONFIGURATION_STATUS:
+        NS_LOG_UNCOND("GetSerializedSize() case LL_CONFIGURATION_STATUS");
+        /**
+         * Configuration status command
+         * See 802.15.4e-2011 Section 5.3.10.2.5
+         *      MHR         - Command Frame Identifier - //?Configuration Parameters 
+         * Variable Octets  -            1             -   Variable Octets  
+         * //! 可以考慮把Short Macaddress field 拿掉?
+         *? Configuration Parameters
+         *  Full MAC address - Short MAC address - Required timeslot duration - Uplink/bidirectional type indicator - Assigned timeslots
+         *          1        -          2        -             1              -                  1                  -         1 
+         */
+        size += 1 + 2 + 1 + 1 + 1;
+    case LL_CONFIGURATON_REQ:
+        NS_LOG_UNCOND("GetSerializedSize() case LL_CONFIGURATON_REQ");
+        /**
+         * Configuration request command
+         * See 802.15.4e-2011 Section 5.3.10.3.4
+         *      MHR         - Command Frame Identifier - //?Configuration Parameters 
+         * Variable Octets  -            1             -   Variable Octets        
+         *? Configuration Parameters
+         *  Full MAC address - Short MAC address - Transmission channel - Existence of management frames - Timeslot duration - Assigned timeslots
+         *          1        -          2        -          1           -               1                -         1         -         1
+         */
+        size += 1 + 2 + 1 + 1 + 1 + 1;
+        break;
+    case LL_CTS_SHARED_GROUP:
+        /**
+         * Clear to send shared group command
+         * See 802.15.4e-2011 Section 5.3.10.4.1
+         *      MHR         - Command Frame Identifier - Network ID   // The Network ID field contains an identifier specific to the LLDN PAN coordinator.
+         * Variable Octets  -            1             -     1      
+         */
+        size += 1;
+        break;
+
+    case LL_RTS:
+        /**
+         * Ready to send command
+         * See 802.15.4e-2011 Section 5.3.10.5.1
+         *      MHR         - Command Frame Identifier - Short Originator Address - Network ID  
+         * Variable Octets  -            1             -             1            -      1
+         *?  Short Originator Address = simple addr of the device who sending this RTS frame.
+         *?  Network ID = should identical to the corresponding received CTS shared group frame.
+         */
+        size += 1 + 1;
+        break;
+    case LL_CTS:
+        /**
+         * Clear to send command
+         * See 802.15.4e-2011 Section 5.3.10.6.1
+         *      MHR         - Command Frame Identifier - Short Originator Address - Network ID  
+         * Variable Octets  -            1             -             1            -      1
+         *?  Short Originator Address = simple address of the device to which this CTS frame is directed.
+         *?  Network ID = should identical to the corresponding received RTS frame.
+         */
+        size += 1 + 1;
+        break;
+    default:
         break;
     }
     return size;
@@ -222,6 +300,8 @@ CommandPayloadHeader::Serialize(Buffer::Iterator start) const
         break;
     case CMD_RESERVED:
         break;
+    default:
+        break;
     }
 }
 
@@ -255,6 +335,8 @@ CommandPayloadHeader::Deserialize(Buffer::Iterator start)
     case GTS_REQ:
         break;
     case CMD_RESERVED:
+        break;
+    default:
         break;
     }
 
@@ -293,6 +375,8 @@ CommandPayloadHeader::Print(std::ostream& os) const
     case GTS_REQ:
         break;
     case CMD_RESERVED:
+        break;
+    default:
         break;
     }
 }
@@ -341,6 +425,66 @@ CommandPayloadHeader::GetCommandFrameType() const
         break;
     case 0x09:
         return GTS_REQ;
+        break;
+    case 0x0d:
+        return LL_DISCOVER_RESP;
+        break;
+    case 0x0e:
+        return LL_CONFIGURATION_STATUS;
+        break;
+    case 0x0f:
+        return LL_CONFIGURATON_REQ;
+        break;
+    case 0x10:
+        return LL_CTS_SHARED_GROUP;
+        break;
+    case 0x11:
+        return LL_RTS;
+        break;
+    case 0x12:
+        return LL_CTS;
+        break;
+    case 0x13:
+        return DSME_ASSOCIATION_REQ;
+        break;
+    case 0x14:
+        return DSME_ASSOCIATION_RESP;
+        break;
+    case 0x15:
+        return DSME_GTS_REQ;
+        break;
+    case 0x16:
+        return DSME_GTS_REPLY;
+        break;
+    case 0x17:
+        return DSME_GTS_NOTIFY;
+        break;
+    case 0x18:
+        return DSME_INFO_REQ;
+        break;
+    case 0x19:
+        return DSME_INFO_REPLY;
+        break;
+    case 0x1a:
+        return DSME_BEACON_ALLOC_NOTIF;
+        break;
+    case 0x1b:
+        return DSME_BEACON_COLLISION_NOTIF;
+        break;
+    case 0x1c:
+        return DSME_LINK_STATUS_REPORT;
+        break;
+    case 0x1d:
+        return AMCA_BEACON_REQ;
+        break;
+    case 0x1e:
+        return AMCA_HELLO;
+        break;
+    case 0x1f:
+        return AMCA_CHENNEL_PROBE;
+        break;
+    case 0x20:
+        return LE_RIT_DATA_REQ;
         break;
     default:
         return CMD_RESERVED;

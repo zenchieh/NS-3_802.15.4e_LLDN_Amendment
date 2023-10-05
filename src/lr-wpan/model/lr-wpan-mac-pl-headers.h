@@ -227,6 +227,12 @@ class CommandPayloadHeader : public Header
     Mac16Address m_shortAddr;  //!< Contains the short address assigned by the coordinator
                                //!< (Association Response Command) See IEEE 802.15.4-2011 5.3.2.2.
     AssocStatus m_assocStatus; //!< Association Status (Association Response Command)
+
+    // For LLDN MAC Command frame payload variable
+    Mac8Address m_simpleAddr;
+    uint16_t timeslotDuration; //!< timeslot length , received by beacon
+    uint8_t typeIndicator;     //!< Uplink/bidirectional type indicator
+
 };
 
 } // namespace ns3
