@@ -104,7 +104,7 @@ class CommandPayloadHeader : public Header
   public:
     /**
      *  The MAC command frames.
-     *  See IEEE 802.15.4-2011, Table 5
+     *  See IEEE 802.15.4-2011 & 802.15.4e , Table 5
      */
     enum MacCommand
     {
@@ -117,7 +117,36 @@ class CommandPayloadHeader : public Header
         BEACON_REQ = 0x07,           //!< Beacon Request (RFD true: none )
         COOR_REALIGN = 0x08,         //!< Coordinator Realignment (RFD true: Rx)
         GTS_REQ = 0x09,              //!< GTS Request (RFD true: none)
-        CMD_RESERVED = 0xff          //!< Reserved
+
+        /* LLDN Amendment */
+        LL_DISCOVER_RESP            = 0x0d,        //!< LLDN Association Request (RFD true: Tx)
+        LL_CONFIGURATION_STATUS     = 0x0e,        
+        LL_CONFIGURATON_REQ         = 0x0f,        
+        LL_CTS_SHARED_GROUP         = 0x10,        
+        LL_RTS                      = 0x11,        
+        LL_CTS                      = 0x12,  
+
+        /* DSME Amendment */
+        DSME_ASSOCIATION_REQ        = 0x13,        //!< DSME Association Request (RFD true: Tx)
+        DSME_ASSOCIATION_RESP       = 0x14,        //!< DSME Association Response (RFD true: Rx)
+        DSME_GTS_REQ                = 0x15,        //!< DSME GTS Request (RFD true: TX, Rx)
+        DSME_GTS_REPLY              = 0x16,        //!< DSME GTS Reply (RFD true: TX, Rx)
+        DSME_GTS_NOTIFY             = 0x17,        //!< DSME GTS Notify (RFD true: TX, Rx)
+        DSME_INFO_REQ               = 0x18,        //!< DSME Information Request (RFD true: TX, Rx)
+        DSME_INFO_REPLY             = 0x19,        //!< DSME Information Reply (RFD true: TX, Rx)
+        DSME_BEACON_ALLOC_NOTIF     = 0x1a,        //!< DSME Beacon allocation notification (RFD true: none)
+        DSME_BEACON_COLLISION_NOTIF = 0x1b,        //!< DSME Beacon collision notification (RFD true: Tx)
+        DSME_LINK_STATUS_REPORT     = 0x1c,        //!< DSME Link status report (RFD true: TX, Rx)
+
+        /* AMCA Amendment */
+        AMCA_BEACON_REQ             = 0x1d,
+        AMCA_HELLO                  = 0x1e,
+        AMCA_CHENNEL_PROBE          = 0x1f,
+
+        /* LE Amendment */
+        LE_RIT_DATA_REQ             = 0x20,
+
+        CMD_RESERVED                = 0xff          //!< Reserved
     };
 
     /**
