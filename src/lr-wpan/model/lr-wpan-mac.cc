@@ -1609,6 +1609,26 @@ LrWpanMac::SetMlmePollConfirmCallback(MlmePollConfirmCallback c)
 }
 
 void
+LrWpanMac::SetMlmeLLDNDiscoveryConfirmCallback(MlmeLLDNDiscoveryConfirmCallback c)
+{
+    m_mlmeLLDNDiscoveryConfirmCallback = c;
+}
+
+void
+LrWpanMac::SetMlmeLLDNConfigurationConfirmCallback(MlmeLLDNConfigurationConfirmCallback c)
+{
+    m_mlmeLLDNConfigurationConfirmCallback = c;
+}
+
+void
+LrWpanMac::SetMlmeLLDNOnlineIndicationCallback(MlmeLLDNOnlineIndicationCallback c)
+{
+    m_mlmeLLDNOnlineIndicationCallback = c;
+}
+
+
+
+void
 LrWpanMac::PdDataIndication(uint32_t psduLength, Ptr<Packet> p, uint8_t lqi)
 {
     NS_ASSERT(m_lrWpanMacState == MAC_IDLE || m_lrWpanMacState == MAC_ACK_PENDING ||

@@ -914,11 +914,8 @@ typedef Callback<void, MlmeAssociateIndicationParams> MlmeAssociateIndicationCal
 typedef Callback<void, MlmeCommStatusIndicationParams> MlmeCommStatusIndicationCallback;
 
 //!< LLDN callback Amendment
-typedef Callback<void, MlmeLLDNDiscoveryRequstParams> MlmeLLDNDiscoveryRequstCallback;
 typedef Callback<void, MlmeLLDNDiscoveryConfirmsParams> MlmeLLDNDiscoveryConfirmCallback;
-typedef Callback<void, MlmeLLDNConfigurationRequestParams> MlmeLLDNConfigurationRequestCallback;
 typedef Callback<void, MlmeLLDNConfigurationConfirmParams> MlmeLLDNConfigurationConfirmCallback;
-typedef Callback<void, MlmeLLDNOnlineRequestParams> MlmeLLDNOnlineRequestCallback;
 typedef Callback<void, MlmeLLDNOnlineIndicationParams> MlmeLLDNOnlineIndicationCallback;
 
 /**
@@ -1246,6 +1243,11 @@ class LrWpanMac : public Object
      * \param c the callback
      */
     void SetMlmePollConfirmCallback(MlmePollConfirmCallback c);
+
+    //!< LLDN callback amendment
+    void SetMlmeLLDNDiscoveryConfirmCallback(MlmeLLDNDiscoveryConfirmCallback c);
+    void SetMlmeLLDNConfigurationConfirmCallback(MlmeLLDNConfigurationConfirmCallback c);
+    void SetMlmeLLDNOnlineIndicationCallback(MlmeLLDNOnlineIndicationCallback c);
 
     // interfaces between MAC and PHY
 
@@ -2437,6 +2439,12 @@ class LrWpanMac : public Object
      * See IEEE 802.15.4-2006, section 7.1.1.2.
      */
     McpsDataConfirmCallback m_mcpsDataConfirmCallback;
+
+    // LLDN callback amendment
+
+    MlmeLLDNDiscoveryConfirmCallback m_mlmeLLDNDiscoveryConfirmCallback;
+    MlmeLLDNConfigurationConfirmCallback m_mlmeLLDNConfigurationConfirmCallback;
+    MlmeLLDNOnlineIndicationCallback m_mlmeLLDNOnlineIndicationCallback;
 
     /**
      * The current state of the MAC layer.
