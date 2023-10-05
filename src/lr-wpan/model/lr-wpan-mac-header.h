@@ -52,7 +52,11 @@ class LrWpanMacHeader : public Header
 {
   public:
     /**
-     * The possible MAC types, see IEEE 802.15.4-2006, Table 79.
+     * The possible MAC frame types, see IEEE 802.15.4-2006, Table 79 & 802.15.4e Table 2.
+     * Used in 
+     * general frame format
+     * - Frame control field
+     *   -  Frame type field
      */
     enum LrWpanMacType
     {
@@ -60,7 +64,24 @@ class LrWpanMacHeader : public Header
         LRWPAN_MAC_DATA = 1,           //!< LRWPAN_MAC_DATA
         LRWPAN_MAC_ACKNOWLEDGMENT = 2, //!< LRWPAN_MAC_ACKNOWLEDGMENT
         LRWPAN_MAC_COMMAND = 3,        //!< LRWPAN_MAC_COMMAND
+        LRWPAN_LLDN = 4,               //!< LRWPAN_LLDN
+        LRWPAN_MULTIPURPOSE = 5,       //!, LRWPAN_MULTIPURPOSE 
         LRWPAN_MAC_RESERVED            //!< LRWPAN_MAC_RESERVED
+    };
+    
+    /**
+     * The possible MAC frame subtypes, see IEEE 802.15.4e-2012, Table 3c.
+     * Used in 
+     * general frame format
+     * - Frame control field
+     *   - Sub Frame type field
+     */
+    enum LrWpanSubMacType
+    {
+        LL_BEACON = 0,
+        LL_DATA   = 1,
+        LL_ACK    = 2,
+        LL_MAC_COMMAND = 3
     };
 
     /**
