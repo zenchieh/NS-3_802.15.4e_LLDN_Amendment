@@ -21,6 +21,7 @@
 
 #include "ipv4-address.h"
 #include "ipv6-address.h"
+#include "mac8-address.h"
 #include "mac16-address.h"
 #include "mac48-address.h"
 #include "mac64-address.h"
@@ -74,6 +75,13 @@ void WriteTo(Buffer::Iterator& i, Mac48Address ad);
 void WriteTo(Buffer::Iterator& i, Mac16Address ad);
 
 /**
+ * \brief Write an Mac8Address to a Buffer
+ * \param i a reference to the buffer to write to
+ * \param ad the Mac8Address
+ */
+void WriteTo(Buffer::Iterator& i, Mac8Address ad);
+
+/**
  * \brief Read an Ipv4Address from a Buffer
  * \param i a reference to the buffer to read from
  * \param ad a reference to the Ipv4Address to be read
@@ -115,6 +123,13 @@ void ReadFrom(Buffer::Iterator& i, Mac48Address& ad);
  * \param ad a reference to the Mac16Address to be read
  */
 void ReadFrom(Buffer::Iterator& i, Mac16Address& ad);
+
+/**
+ * \brief Read a Mac8Address from a Buffer
+ * \param i a reference to the buffer to read from
+ * \param ad a reference to the Mac8Address to be read
+ */
+void ReadFrom(Buffer::Iterator& i, Mac8Address& ad);
 
 namespace addressUtils
 {

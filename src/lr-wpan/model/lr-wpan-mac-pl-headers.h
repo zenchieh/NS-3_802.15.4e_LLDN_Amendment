@@ -229,9 +229,22 @@ class CommandPayloadHeader : public Header
     AssocStatus m_assocStatus; //!< Association Status (Association Response Command)
 
     // For LLDN MAC Command frame payload variable
+
+    // LLDN Discover response command 
     Mac8Address m_simpleAddr;
-    uint16_t timeslotDuration; //!< timeslot length , received by beacon
-    uint8_t typeIndicator;     //!< Uplink/bidirectional type indicator
+    uint16_t m_timeslotDuration; //!< Timeslot length , received by beacon
+    uint8_t m_typeIndicator;     //!< Uplink/bidirectional type indicator
+
+    // Configuration status command
+    uint8_t m_assignedTimeSlot;     //!< Timeslot assigned for transmission
+    // Configuration request command
+    uint8_t m_txChannel;            //!< Transmission channel
+    uint8_t m_enMgntFrame;          //!< Enable MgmtTS or not
+
+    // Clear to send shared group command
+    uint8_t m_networkID;
+    // Ready to send command
+    Mac8Address m_shortOriginatorAddr;
 
 };
 

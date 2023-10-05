@@ -81,6 +81,15 @@ WriteTo(Buffer::Iterator& i, Mac16Address ad)
 }
 
 void
+WriteTo(Buffer::Iterator& i, Mac8Address ad)
+{
+    NS_LOG_FUNCTION(&i << &ad);
+    uint8_t mac;
+    ad.CopyTo(&mac);
+    i.Write(&mac, 1);
+}
+
+void
 ReadFrom(Buffer::Iterator& i, Ipv4Address& ad)
 {
     NS_LOG_FUNCTION(&i << &ad);
@@ -131,6 +140,15 @@ ReadFrom(Buffer::Iterator& i, Mac16Address& ad)
     i.Read(mac + 1, 1);
     i.Read(mac, 1);
     ad.CopyFrom(mac);
+}
+
+void
+ReadFrom(Buffer::Iterator& i, Mac8Address& ad)
+{
+    NS_LOG_FUNCTION(&i << &ad);
+    uint8_t mac;
+    i.Read(&mac, 1);
+    ad.CopyFrom(&mac);
 }
 
 namespace addressUtils

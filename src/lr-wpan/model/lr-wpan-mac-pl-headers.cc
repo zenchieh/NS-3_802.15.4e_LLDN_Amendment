@@ -195,7 +195,7 @@ CommandPayloadHeader::GetSerializedSize() const
         NS_LOG_UNCOND("GetSerializedSize() case LL_CONFIGURATON_REQ");
         // TODO - need to calculate timeslot length
         /**
-         * Coordinator discover response command
+         * Discover response command
          * See 802.15.4e-2011 Section 5.3.10.1.4
          *      MHR         - Command Frame Identifier - //?Discovery parameters
          * Variable Octets  -            1             -   Variable Octets        
@@ -232,6 +232,7 @@ CommandPayloadHeader::GetSerializedSize() const
         size += 1 + 2 + 1 + 1 + 1 + 1;
         break;
     case LL_CTS_SHARED_GROUP:
+        NS_LOG_UNCOND("GetSerializedSize() case LL_CTS_SHARED_GROUP");
         /**
          * Clear to send shared group command
          * See 802.15.4e-2011 Section 5.3.10.4.1
@@ -242,6 +243,7 @@ CommandPayloadHeader::GetSerializedSize() const
         break;
 
     case LL_RTS:
+        NS_LOG_UNCOND("GetSerializedSize() case LL_RTS");
         /**
          * Ready to send command
          * See 802.15.4e-2011 Section 5.3.10.5.1
@@ -253,6 +255,7 @@ CommandPayloadHeader::GetSerializedSize() const
         size += 1 + 1;
         break;
     case LL_CTS:
+        NS_LOG_UNCOND("GetSerializedSize() case LL_CTS");
         /**
          * Clear to send command
          * See 802.15.4e-2011 Section 5.3.10.6.1
@@ -300,6 +303,95 @@ CommandPayloadHeader::Serialize(Buffer::Iterator start) const
         break;
     case CMD_RESERVED:
         break;
+
+    //!< LLDN MAC command frame serializer
+    case LL_DISCOVER_RESP:
+
+        NS_LOG_UNCOND("Serialize() case LL_CONFIGURATON_REQ");
+        /**
+         * Discover response command
+         * See 802.15.4e-2011 Section 5.3.10.1.4
+         *      MHR         - Command Frame Identifier - //?Discovery parameters
+         * Variable Octets  -            1             -   Variable Octets        
+         *? Discovery parameters
+         *  Full MAC address - Required timeslot duration - Uplink/bidirectional type indicator
+         *          1        -              1             -                 1
+         */
+        i.WriteU8(m_timeslotDuration);
+        i.WriteU8(m_typeIndicator);
+        break;
+    case LL_CONFIGURATION_STATUS:
+        NS_LOG_UNCOND("Serialize() case LL_CONFIGURATION_STATUS");
+        /**
+         * Configuration status command
+         * See 802.15.4e-2011 Section 5.3.10.2.5
+         *      MHR         - Command Frame Identifier - //?Configuration Parameters 
+         * Variable Octets  -            1             -   Variable Octets  
+         *? Configuration Parameters
+         *  Full MAC address - Short MAC address - Required timeslot duration - Uplink/bidirectional type indicator - Assigned timeslots
+         *          1        -          2        -             1              -                  1                  -         1 
+         */
+        WriteTo(i,m_simpleAddr);
+        WriteTo(i,m_shortAddr);
+        i.WriteU8(m_timeslotDuration);
+        i.WriteU8(m_typeIndicator);
+        i.WriteU8(m_assignedTimeSlot);
+        break;
+    case LL_CONFIGURATON_REQ:
+        NS_LOG_UNCOND("Serialize() case LL_CONFIGURATON_REQ");
+        /**
+         * Configuration request command
+         * See 802.15.4e-2011 Section 5.3.10.3.4
+         *      MHR         - Command Frame Identifier - //?Configuration Parameters 
+         * Variable Octets  -            1             -   Variable Octets        
+         *? Configuration Parameters
+         *  Full MAC address - Short MAC address - Transmission channel - Existence of management frames - Timeslot duration - Assigned timeslots
+         *          1        -          2        -          1           -               1                -         1         -         1
+         */
+        WriteTo(i,m_simpleAddr);
+        WriteTo(i,m_shortAddr);
+        i.WriteU8(m_txChannel);
+        i.WriteU8(m_enMgntFrame);
+        i.WriteU8(m_timeslotDuration);
+        i.WriteU8(m_assignedTimeSlot);
+        break;
+    case LL_CTS_SHARED_GROUP:
+        NS_LOG_UNCOND("Serialize() case LL_CTS_SHARED_GROUP");
+        /**
+         * Clear to send shared group command
+         * See 802.15.4e-2011 Section 5.3.10.4.1
+         *      MHR         - Command Frame Identifier - Network ID   // The Network ID field contains an identifier specific to the LLDN PAN coordinator.
+         * Variable Octets  -            1             -     1      
+         */
+        i.WriteU8(m_networkID);
+        break;
+
+    case LL_RTS:
+        NS_LOG_UNCOND("Serialize() case LL_RTS");
+        /**
+         * Ready to send command
+         * See 802.15.4e-2011 Section 5.3.10.5.1
+         *      MHR         - Command Frame Identifier - Short Originator Address - Network ID  
+         * Variable Octets  -            1             -             1            -      1
+         *?  Short Originator Address = simple addr of the device who sending this RTS frame.
+         *?  Network ID = should identical to the corresponding received CTS shared group frame.
+         */
+        WriteTo(i,m_shortOriginatorAddr);
+        i.WriteU8(m_networkID);
+        break;
+    case LL_CTS:
+        NS_LOG_UNCOND("Serialize() case LL_CTS");
+        /**
+         * Clear to send command
+         * See 802.15.4e-2011 Section 5.3.10.6.1
+         *      MHR         - Command Frame Identifier - Short Originator Address - Network ID  
+         * Variable Octets  -            1             -             1            -      1
+         *?  Short Originator Address = simple address of the device to which this CTS frame is directed.
+         *?  Network ID = should identical to the corresponding received RTS frame.
+         */
+        WriteTo(i,m_shortOriginatorAddr);
+        i.WriteU8(m_networkID);
+        break;
     default:
         break;
     }
@@ -335,6 +427,98 @@ CommandPayloadHeader::Deserialize(Buffer::Iterator start)
     case GTS_REQ:
         break;
     case CMD_RESERVED:
+        break;
+
+    //!< LLDN MAC command frame deserializer
+    case LL_DISCOVER_RESP:
+
+        NS_LOG_UNCOND("Deserialize() case LL_CONFIGURATON_REQ");
+        /**
+         * Discover response command
+         * See 802.15.4e-2011 Section 5.3.10.1.4
+         *      MHR         - Command Frame Identifier - //?Discovery parameters
+         * Variable Octets  -            1             -   Variable Octets        
+         *? Discovery parameters
+         *  Full MAC address - Required timeslot duration - Uplink/bidirectional type indicator
+         *          1        -              1             -                 1
+         */
+
+        m_timeslotDuration = i.ReadU8();
+        m_typeIndicator = i.ReadU8();
+
+        break;
+    case LL_CONFIGURATION_STATUS:
+        NS_LOG_UNCOND("Deserialize() case LL_CONFIGURATION_STATUS");
+        /**
+         * Configuration status command
+         * See 802.15.4e-2011 Section 5.3.10.2.5
+         *      MHR         - Command Frame Identifier - //?Configuration Parameters 
+         * Variable Octets  -            1             -   Variable Octets  
+         *? Configuration Parameters
+         *  Full MAC address - Short MAC address - Required timeslot duration - Uplink/bidirectional type indicator - Assigned timeslots
+         *          1        -          2        -             1              -                  1                  -         1 
+         */
+        ReadFrom(i,m_simpleAddr);
+        ReadFrom(i,m_shortAddr);
+        m_timeslotDuration = i.ReadU8();
+        m_typeIndicator = i.ReadU8();
+        m_assignedTimeSlot = i.ReadU8();
+        break;
+    case LL_CONFIGURATON_REQ:
+        NS_LOG_UNCOND("Deserialize() case LL_CONFIGURATON_REQ");
+        /**
+         * Configuration request command
+         * See 802.15.4e-2011 Section 5.3.10.3.4
+         *      MHR         - Command Frame Identifier - //?Configuration Parameters 
+         * Variable Octets  -            1             -   Variable Octets        
+         *? Configuration Parameters
+         *  Full MAC address - Short MAC address - Transmission channel - Existence of management frames - Timeslot duration - Assigned timeslots
+         *          1        -          2        -          1           -               1                -         1         -         1
+         */
+        ReadFrom(i,m_simpleAddr);
+        ReadFrom(i,m_shortAddr);
+        m_txChannel = i.ReadU8();
+        m_enMgntFrame = i.ReadU8();
+        m_timeslotDuration = i.ReadU8();
+        m_assignedTimeSlot = i.ReadU8();
+        break;
+    case LL_CTS_SHARED_GROUP:
+        NS_LOG_UNCOND("Deserialize() case LL_CTS_SHARED_GROUP");
+        /**
+         * Clear to send shared group command
+         * See 802.15.4e-2011 Section 5.3.10.4.1
+         *      MHR         - Command Frame Identifier - Network ID   // The Network ID field contains an identifier specific to the LLDN PAN coordinator.
+         * Variable Octets  -            1             -     1      
+         */
+        m_networkID =i.ReadU8();
+        break;
+
+    case LL_RTS:
+        NS_LOG_UNCOND("Deserialize() case LL_RTS");
+        /**
+         * Ready to send command
+         * See 802.15.4e-2011 Section 5.3.10.5.1
+         *      MHR         - Command Frame Identifier - Short Originator Address - Network ID  
+         * Variable Octets  -            1             -             1            -      1
+         *?  Short Originator Address = simple addr of the device who sending this RTS frame.
+         *?  Network ID = should identical to the corresponding received CTS shared group frame.
+         */
+
+        ReadFrom(i,m_shortOriginatorAddr);
+        m_networkID = i.ReadU8();
+        break;
+    case LL_CTS:
+        NS_LOG_UNCOND("Deserialize() case LL_CTS");
+        /**
+         * Clear to send command
+         * See 802.15.4e-2011 Section 5.3.10.6.1
+         *      MHR         - Command Frame Identifier - Short Originator Address - Network ID  
+         * Variable Octets  -            1             -             1            -      1
+         *?  Short Originator Address = simple address of the device to which this CTS frame is directed.
+         *?  Network ID = should identical to the corresponding received RTS frame.
+         */
+        ReadFrom(i,m_shortOriginatorAddr);
+        m_networkID = i.ReadU8();
         break;
     default:
         break;
