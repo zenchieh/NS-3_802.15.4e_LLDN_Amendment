@@ -122,6 +122,12 @@ typedef enum
     MLME_SYNC_REQ = 4   //!< Pending MLME-SYNC.request primitive
 } PendingPrimitiveStatus;
 
+typedef enum {
+        EBAutoSA_NONE = 0,
+        EBAutoSA_SHORT = 1,
+        EBAutoSA_FULL = 2,
+} EBAutoSA;
+
 namespace TracedValueCallback
 {
 
@@ -1235,7 +1241,7 @@ class LrWpanMac : public Object
      */
     void SetIndTxQMaxSize(uint32_t queueSize);
 
-    // MAC PIB attributes
+    //!< MAC PIB attributes
 
     /**
      * The time that the device transmitted its last beacon frame.
@@ -1243,6 +1249,46 @@ class LrWpanMac : public Object
      * See IEEE 802.15.4-2011, section 6.4.2, Table 52.
      */
     Time m_macBeaconTxTime;
+    Time m_BeaconStartTxTime;
+
+    /**
+     * Indicate the start time of the beacon slot
+     * specify the time of beacon transmission in units of microseconds.
+     */
+    Time m_startOfBcnSlot;
+
+    /**
+     * Indicate the start time of the beacon slot of the Parent device.
+     * specify the time of beacon transmission in units of microseconds.
+     */
+    Time m_startOfBcnSlotOfSyncParent;
+
+    bool m_becomeCoord;
+
+    /**
+     * Flag to indicate a normal coordinator(Not Pan coordinator) should transmit a beacon
+     * currently.
+     */
+    bool m_sendBcn;
+
+    /**
+     * Flag to indicate that if a coordinator realignment command is received while orphan scanning
+     * to terminate the scaning.
+     */
+    bool realignmentRecevied;
+
+    /**
+     * The maximum value of the backoff, exponent, BE, in the CSMA-CA algorithm.
+     *? Default value : 5, except for LLDN mode = 3
+     */
+    uint8_t macMaxBE;
+
+    /**
+     * The maximum number of backoffs the CSMA-CA algorithm will attempt
+     *  before declaring a channel access failure.
+     *? Default value : 4, except for LLDN mode = 0
+     */
+    uint8_t macMaxCSMABackoffs;
 
     /**
      * The time that the device received its last bit of the beacon frame.
@@ -1251,6 +1297,7 @@ class LrWpanMac : public Object
      * Its purpose is somehow similar to m_macBeaconTxTime
      */
     Time m_macBeaconRxTime;
+    Time m_bcnProcessTime;
 
     /**
      * The maximum time, in multiples of aBaseSuperframeDuration, a device
@@ -1317,6 +1364,18 @@ class LrWpanMac : public Object
     uint16_t m_macTransactionPersistenceTime;
 
     /**
+     * The index of a vacant time slot in Beacon bitmap.
+     * Used for the MlmeStartRequest of non-Pan coordinator.
+     */
+    uint16_t m_choosedSDIndexToSendBcn = 0;
+
+    /**
+     * The index of the associated Pan in the Pan Descriptor List.
+     * To extract the information of BO, MO, SO.
+     */
+    int m_descIdxOfAssociatedPan;
+
+    /**
      * The total size of the received beacon in symbols.
      * Its value is used to calculate the end CAP time of the incoming superframe.
      */
@@ -1353,6 +1412,11 @@ class LrWpanMac : public Object
      * See IEEE 802.15.4-2006, section 7.4.2, Table 86.
      */
     bool m_macPromiscuousMode;
+
+    /**
+     * Allow all the data packet frame receive and forward to the higher layer (SixLowPan)
+     */
+    bool m_acceptAllHilowPkt;
 
     /**
      * 16 bits id of PAN on which this device is operating. 0xffff means not
@@ -1426,6 +1490,11 @@ class LrWpanMac : public Object
     uint8_t m_maxEnergyLevel;
 
     /**
+     * Variable to store the original Channel Num used in the CAP period(CSMA/CA).
+     */
+    uint8_t m_originalChannelInCAP;
+
+    /**
      * The value of the necessary InterFrame Space after the transmission of a packet.
      */
     uint32_t m_ifs;
@@ -1434,6 +1503,11 @@ class LrWpanMac : public Object
      * Indication of whether the current device is the PAN coordinator
      */
     bool m_panCoor;
+    
+    /**
+     * Indication of whether the current device is the coordinator
+     */
+    bool m_coord;
 
     /**
      * Indication of the Interval used by the coordinator to transmit beacon frames
@@ -1474,6 +1548,135 @@ class LrWpanMac : public Object
      */
     uint8_t m_numLostBeacons;
 
+    // * 802.15.4e Amendment *
+    // MAC PIB attributes, See IEEE 802.15.4e-2012 Section 6.4.2 Table 52
+    /**
+     * The maximum time (in μs) to wait for the PHY header of 
+     * an enhanced acknowledgment frame to arrive followin
+     * g a transmitted data frame
+     *? Default value : 0x360 (864us)
+     */
+    uint16_t m_macEnhAckWaitDuration;
+
+    /**
+     * Indicates whether frames without a destination PAN ID 
+     * or destination address are to treated as though 
+     * they are addressed to the broadcast PANID (0xffff) 
+     * and broadcast short address (0xfffff)
+     *? Default value : FALSE
+     */    
+    bool m_macImplicitBroadcast;
+
+    /**
+     * The Simple address of the coordinator through which the device is
+     * associated.
+     *? 0xFF indicates that the device does not have a simple address. 
+     *? 0xFE A value of 0xfe indicates that the device has associated but has not been
+     * allocated an address
+     *? Default value : 0xff
+     * See IEEE 802.15.4e-2012, section 6.4.2, Table 52.
+     */
+    Mac8Address m_macSimpleAddress;
+
+    // General MAC PIB attributes for functional organization, 
+    // See IEEE 802.15.4e-2012 Section 6.4.3.2 Table 
+    
+    // the device is capable of functionality specific to LLDN
+    bool m_macLLcapable;
+    // the device is using functionality specific to LLDN
+    bool m_macLLenabled;
+    
+    // the device is capable of functionality specific to DSME
+    bool m_macDSMEcapable;
+
+    // the device is capable of unslotted channel hopping
+    bool m_macHoppingCapable;
+
+    // the device is using functionality specific to DSME
+    bool m_macDSMEenabled;
+
+    // the device is using unslotted channel hopping
+    bool m_macHoppingEnabled;
+
+    // MAC PIB attributes for hopping sequence 
+    // See IEEE 802.15.4e-2012 Section 6.4.3.4 Table 52f
+    // Each hopping sequence has a unique ID.
+    uint8_t m_macHoppingSeqID;          
+
+    /**
+     * Corresponds to the 5 MSBs (b27, ...,
+     * b31) of a row in phyChannelsSupported.
+     * Note this may not correspond to the
+     * current channelPage in use.
+     */
+    uint8_t m_macChannelPage;
+
+    // Number of channels supported by the PHY on this channelPage.
+    uint16_t m_numOfChannels;
+
+    /**
+     * For channel pages 0 to 6, the 27 LSBs (b0, b1, ..., b26) 
+     * indicate the status (1 = to be used, 0 = not to be used) 
+     * for each of the up to 27 valid channels available
+     * to the PHY. For pages 7 and 8, the 27 LSBs indicate 
+     * the configuration of the PHY, and the channel list is
+     * contained in the extendedBitmap
+     */
+    uint32_t m_macPhyConfiguration;
+
+    /**
+     * For pages 7 and 8, a bitmap of numberOfChannels bits
+     * where bk shall indicate the status of channel k for each
+     * of the up to numberOfChannels valid channels 
+     * supported by that channel page nd phyConfiguration. 
+     * Otherwise field is empty.
+     */
+    std::vector<uint16_t> m_macExtBitmap;   //size varies, has to be allocated in run time
+
+    /**
+     * The number of channels in the Hopping Sequence. Does not necessarily equal
+     * numberOfChannels.
+     */
+    uint16_t m_hoppingSeqLen;
+
+    /**
+     * When TRUE, device responds to beacon requests and enhanced beacon requests 
+     * automatically. When FALSE, device passes beacon/enhanced beacon payload up 
+     * to higher layer using MLME-BEACONREQUEST.indication.
+     */
+    bool m_macBeaconAutoRespond;
+
+
+    // Table 52n—EB-specific MAC PIB attributes
+    // See 802.15.4e-2012 Section 6.4.3.11
+
+    /**
+     * When TRUE, in a beacon enabled PAN the device
+     * should use Enhanced Beacons rather than standard beacons.
+     */
+    bool m_macUseEnhancedBeacon;
+
+    // Indicates if devices should perform filtering in response to EBR.
+    bool m_macFilteringEnabled;
+
+    /**
+     * Indicates if beacons generated by the MAC in
+     * response to EB include Source Address field.
+     */
+    EBAutoSA m_macEBAutoSA;
+
+    //!< Get & Set MAC PIB attributes
+
+    /**
+     * Set LLDN mode enabled.
+     */
+    void SetLLDNModeEnabled();
+
+    /**
+     * Set LLDN mode disabled.
+     */
+    void SetLLDNModeDisabled();
+
     /**
      * Get the macAckWaitDuration attribute value.
      *
@@ -1506,6 +1709,12 @@ class LrWpanMac : public Object
      * \return True if m_txPkt (packet awaiting to be sent) destination is its coordinator
      */
     bool isCoordDest();
+
+    void SetAsCoordinator();
+
+    void SetNotCoordinator();
+
+    bool IsCoord() const;
 
     /**
      * Check if the packet destination is its coordinator
@@ -2065,7 +2274,7 @@ class LrWpanMac : public Object
     Ptr<Packet> m_rxPkt;
 
     /**
-     * The simple address used by this MAC. 
+     * The simple address used by this MAC. (LLDN mode)
      */
     Mac8Address m_simpleAddress;
 

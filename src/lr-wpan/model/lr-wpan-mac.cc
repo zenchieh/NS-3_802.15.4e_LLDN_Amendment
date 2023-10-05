@@ -214,6 +214,10 @@ LrWpanMac::LrWpanMac()
     m_macDsn = SequenceNumber8(uniformVar->GetValue());
     m_macBsn = SequenceNumber8(uniformVar->GetValue());
     m_shortAddress = Mac16Address("00:00");
+
+    // LLDN param setting
+    m_macLLcapable = true;
+    m_macLLenabled = false;
 }
 
 LrWpanMac::~LrWpanMac()
@@ -3434,6 +3438,17 @@ LrWpanMac::ChangeMacState(LrWpanMacState newState)
     m_lrWpanMacState = newState;
 }
 
+void LrWpanMac::SetLLDNModeEnabled() {
+    NS_ASSERT(m_macDSMEcapable);
+
+    m_macLLenabled = true;
+}
+
+void LrWpanMac::SetLLDNModeDisabled() {
+    m_macLLenabled = false;
+}
+
+
 uint64_t
 LrWpanMac::GetMacAckWaitDuration() const
 {
@@ -3457,6 +3472,14 @@ void
 LrWpanMac::SetMacMaxFrameRetries(uint8_t retries)
 {
     m_macMaxFrameRetries = retries;
+}
+
+void LrWpanMac::SetAsCoordinator() {
+    m_coord = true;
+}
+
+void LrWpanMac::SetNotCoordinator() {
+    m_coord = false;
 }
 
 bool
