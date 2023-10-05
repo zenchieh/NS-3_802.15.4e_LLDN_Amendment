@@ -215,9 +215,18 @@ LrWpanMac::LrWpanMac()
     m_macBsn = SequenceNumber8(uniformVar->GetValue());
     m_shortAddress = Mac16Address("00:00");
 
-    // LLDN param setting
+    // LLDN param default setting
     m_macLLcapable = true;
     m_macLLenabled = false;
+
+    m_macLLDNnumTimeSlots = 20;
+    m_macLLDNnumUplinkTS = 20;
+    m_macLLDNnumRetransmitTS = 0;
+    m_macLLDNnumBidirectionalTS = 0;
+    m_macLLDNmgmtTS = false;
+    m_macLLDNlowLatencyNWid = 0xff;
+    m_macLLDNdiscoveryModeTimeout = 256;
+    m_macLLDNcoordinator = false;
 }
 
 LrWpanMac::~LrWpanMac()
@@ -3438,13 +3447,106 @@ LrWpanMac::ChangeMacState(LrWpanMacState newState)
     m_lrWpanMacState = newState;
 }
 
-void LrWpanMac::SetLLDNModeEnabled() {
+//!< LLDN Parameters setting
+void 
+LrWpanMac::SetMacLLDNNumTimeSlots(uint8_t numTS)
+{
+    m_macLLDNnumTimeSlots = numTS;
+}
+
+void 
+LrWpanMac::SetMacLLDNnumUplinkTS(uint8_t numUpLinkTS)
+{
+    m_macLLDNnumUplinkTS = numUpLinkTS;
+}
+
+void
+LrWpanMac::SetMacLLDNnumBidirectionalTS(uint8_t numBidirectionalTS)
+{
+    m_macLLDNnumBidirectionalTS = numBidirectionalTS;
+}
+
+void
+LrWpanMac::SetMacLLDNmgmtTSEnabled()
+{
+    m_macLLDNmgmtTS = true;
+}
+
+void
+LrWpanMac::SetMacLLDNmgmtTSDisabled()
+{
+    m_macLLDNmgmtTS = false;
+}
+
+void
+LrWpanMac::SetMacLLDNdiscoveryModeTimeout(uint16_t discoveryModeTimeout)
+{
+    m_macLLDNdiscoveryModeTimeout = discoveryModeTimeout;
+}
+
+void
+LrWpanMac::SetMacLLDNcoordinator(bool isCoordinator)
+{
+    m_macLLDNcoordinator = isCoordinator;
+}
+
+void
+LrWpanMac::SetMacLLDNnumReTransmitTS(uint8_t numRetransmitTS)
+{
+    m_macLLDNnumRetransmitTS = numRetransmitTS;
+}
+
+uint8_t 
+LrWpanMac::GetMacLLDNnumUplinkTS() const
+{
+    return m_macLLDNnumUplinkTS;
+}
+
+uint8_t 
+LrWpanMac::GetMacLLDNNumTimeSlots() const
+{
+    return m_macLLDNnumTimeSlots;
+}
+
+uint8_t 
+LrWpanMac::GetMacLLDNnumReTransmitTS() const
+{
+    return m_macLLDNnumRetransmitTS;
+}
+
+uint8_t 
+LrWpanMac::GetMacLLDNnumBidirectionalTS() const
+{
+    return m_macLLDNnumBidirectionalTS;
+}
+
+bool 
+LrWpanMac::GetMacLLDNmgmtTS() const
+{
+    return m_macLLDNmgmtTS;
+}
+
+uint16_t 
+LrWpanMac::GetMacLLDNdiscoveryModeTimeout() const
+{
+    return m_macLLDNdiscoveryModeTimeout;
+}
+
+bool 
+LrWpanMac::GetMacLLDNcoordinator() const
+{
+    return m_macLLDNcoordinator;
+}
+
+void 
+LrWpanMac::SetLLDNModeEnabled() {
     NS_ASSERT(m_macDSMEcapable);
 
     m_macLLenabled = true;
 }
 
-void LrWpanMac::SetLLDNModeDisabled() {
+void 
+LrWpanMac::SetLLDNModeDisabled() {
     m_macLLenabled = false;
 }
 

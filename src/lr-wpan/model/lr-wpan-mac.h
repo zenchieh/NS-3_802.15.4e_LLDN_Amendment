@@ -1665,7 +1665,86 @@ class LrWpanMac : public Object
      */
     EBAutoSA m_macEBAutoSA;
 
+    //!< LLDN MAC PIB attributes
+
+    /**
+     * Number of timeslots within superframe excluding timeslot for beacon frame and management timeslots.
+     *? Note : This value need to considerate Beacon slot and Management slot in LL frame structure.
+     *? Default value =  20 , range : 0 ~254
+     */
+    uint8_t m_macLLDNnumTimeSlots;
+
+    /**
+     * Number of uplink timeslots within superframe for unidirectional communication (uplink).
+     *? Default value =  20 , range : 0 ~ m_macLLDNnumTimeSlots
+     */
+    uint8_t m_macLLDNnumUplinkTS;
+
+    /**
+     * Number of uplink timeslots reserved for retransmission
+     *? Default value =  0, range : 0 ~ (m_macLLDNnumUplinkTS / 2)
+     */
+    uint8_t m_macLLDNnumRetransmitTS;
+
+    /**
+     * Number of bidirectional timeslots as defined in 
+     * IEEE-802.15.4e-2012 5.1.1.6.5 within superframe for bidirectional communication.
+     *? Default value =  0, range : 0 ~ macLLDNnumTimeSlots
+     */
+    uint8_t m_macLLDNnumBidirectionalTS;  
+
+    /**
+     * Indicates presence of management timeslots in Online state.
+     *? Default value =  FALSE, range : 0 ~ 1
+     */
+    bool m_macLLDNmgmtTS;
+
+    /**
+     * The 8-bit identifier of the LLDN on which the
+     * device is operating. If this value is 0xff, the device is not associated.
+     *? Maybe not used (?).
+     *? Default value =  0xff, range : 0x00 ~ 0xff
+     */
+    uint8_t m_macLLDNlowLatencyNWid;
+
+    uint8_t m_macLLDNtimeSlotInfo; // implement specific
+
+    /**
+     * The LLDN coordinator switches from the Discovery state into the Configuration state 
+     * after it did not receive a Discover Response Frame within the last 
+     * macLLDNdiscoveryModeTimeout seconds.
+     *? Default value =  256, range : 0 ~ 256
+     */
+    uint16_t m_macLLDNdiscoveryModeTimeout;
+
+    /**
+     * Indicates whether the LLDN device is the LLDN PAN coordinator or not.
+     *? Default value =  FALSE, range : 0 ~ 1
+     */
+    bool m_macLLDNcoordinator;
+
     //!< Get & Set MAC PIB attributes
+
+    /**
+     * Set & Get LLDN Parameters. See IEEE-802.15.4e-2012 Table 52g - LLDN MAC PIB attributes.
+     */
+
+    void SetMacLLDNNumTimeSlots(uint8_t numTS);
+    void SetMacLLDNnumUplinkTS(uint8_t numUpLinkTS);
+    void SetMacLLDNnumReTransmitTS(uint8_t numRetransmitTS);    
+    void SetMacLLDNnumBidirectionalTS(uint8_t numBidirectionalTS);
+    void SetMacLLDNmgmtTSEnabled();
+    void SetMacLLDNmgmtTSDisabled();     
+    void SetMacLLDNdiscoveryModeTimeout(uint16_t discoveryModeTimeout);    
+    void SetMacLLDNcoordinator(bool isCoordinator);
+
+    uint8_t  GetMacLLDNNumTimeSlots() const;
+    uint8_t  GetMacLLDNnumUplinkTS() const;
+    uint8_t  GetMacLLDNnumReTransmitTS() const;
+    uint8_t  GetMacLLDNnumBidirectionalTS() const;
+    bool     GetMacLLDNmgmtTS() const;
+    uint16_t GetMacLLDNdiscoveryModeTimeout() const;
+    bool     GetMacLLDNcoordinator() const;
 
     /**
      * Set LLDN mode enabled.
