@@ -332,6 +332,47 @@ typedef enum
     MLMEPOLL_INVALID_PARAMETER = 9
 } LrWpanMlmePollConfirmStatus;
 
+//!< LLDN primitives parameters
+struct LrWpanMlmeLLNetworkConfiguration
+{
+    // TODO add NetworkConfigurations
+};
+
+/**
+ * \ingroup lr-wpan
+ *
+ * Table 44m of IEEE 802.15.4e-2011
+ */
+typedef enum
+{
+    MLME_LLDN_DISCOVERY_SUCCESS = 0,
+    MLME_LLDN_DISCOVERY_NO_DEVICES = 1,
+    MLME_LLDN_DISCOVERY_ABORTED = 2
+} LrWpanMlmeLLDNDiscoveryConfirmStatus;
+
+/**
+ * \ingroup lr-wpan
+ *
+ * Table 44o of IEEE 802.15.4e-2011
+ */
+typedef enum
+{
+    MLME_LLDN_CONFIGURATION_SUCCESS = 0,
+    MLME_LLDN_CONFIGURATION_NO_DEVICES = 1,
+    MLME_LLDN_CONFIGURATION_ABORTED = 2
+} LrWpanMlmeLLDNConfigurationConfirmStatus; 
+
+typedef enum
+{
+    MLME_LLDN_ONLINE_NONE = 0, //!< no problems.
+    MLME_LLDN_ONLINE_UNSPECIFIED = 1, //!< unexpected issues.
+} LrWpanMlmeLLDNOnlineIndicationStatus; //!< Contains the status in the LLDN including any discovered problems.
+
+typedef enum
+{
+    // TODO : Additional supporting information
+} LrWpanMlmeLLAdditionalInfo;
+
 /**
  * \ingroup lr-wpan
  *
@@ -704,6 +745,74 @@ struct MlmePollConfirmParams
                                      //!< MLME-poll.request.
 };
 
+//!< LLDN primitives Amendment  
+/**
+ * \ingroup lr-wpan
+ *
+ * MLME-LLDN-DISCOVERY.request params. See  802.15.4e-2011 Section 6.2.20.2
+ */
+struct MlmeLLDNDiscoveryRequstParams
+{
+    LrWpanMlmeLLNetworkConfiguration m_LLNetworkConfiguration; //!< Contains the necessary configuration parameters 
+                                                               //!< from the next higher layer for the LLDN in Discovery state.
+};
+/**
+ * \ingroup lr-wpan
+ *
+ * MLME-LLDN-DISCOVERY.confirm params. See  802.15.4e-2011 Section 6.2.20.3
+ */
+struct MlmeLLDNDiscoveryConfirmsParams
+{
+    LrWpanMlmeLLDNDiscoveryConfirmStatus m_status;
+    uint8_t m_discoveredDevices;  //!< Number of discovered devices. 0 ~ 128
+    LrWpanMlmeLLNetworkConfiguration m_LLNetworkConfiguration; //!< Contains the necessary configuration parameters 
+                                                               //!< from the next higher layer for the LLDN in Discovery state.
+};
+
+/**
+ * \ingroup lr-wpan
+ *
+ * MLME-LLDN-CONFIGURATION.request params. See  802.15.4e-2011 Section 6.2.20.4
+ */
+struct MlmeLLDNConfigurationRequestParams
+{
+    LrWpanMlmeLLNetworkConfiguration m_LLNetworkConfiguration; //!< Contains the necessary configuration parameters 
+                                                               //!< from the next higher layer for the LLDN in Discovery state.
+};
+
+/**
+ * \ingroup lr-wpan
+ *
+ * MLME-LLDN-CONFIGURATION.confirm params. See  802.15.4e-2011 Section 6.2.20.5
+ */
+struct MlmeLLDNConfigurationConfirmParams
+{
+    LrWpanMlmeLLDNConfigurationConfirmStatus m_status;
+    uint8_t m_configuredDevices;  //!< Number of configured devices. 0 ~ 128
+    LrWpanMlmeLLNetworkConfiguration m_LLNetworkConfiguration; //!< Contains the necessary configuration parameters 
+                                                               //!< from the next higher layer for the LLDN in Discovery state.
+};
+
+/**
+ * \ingroup lr-wpan
+ *
+ * MLME-LLDN-ONLINE.request params. See  802.15.4e-2011 Section 6.2.20.6
+ */
+struct MlmeLLDNOnlineRequestParams
+{
+};
+
+/**
+ * \ingroup lr-wpan
+ *
+ * MLME-LLDN-ONLINE.indication params. See  802.15.4e-2011 Section 6.2.20.7
+ */
+struct MlmeLLDNOnlineIndicationParams
+{
+    LrWpanMlmeLLDNOnlineIndicationStatus m_status;
+    LrWpanMlmeLLAdditionalInfo m_additionalIndo;
+};
+
 /**
  * \ingroup lr-wpan
  *
@@ -803,6 +912,14 @@ typedef Callback<void, MlmeAssociateIndicationParams> MlmeAssociateIndicationCal
  *  See 802.15.4-2011 6.2.4.2
  */
 typedef Callback<void, MlmeCommStatusIndicationParams> MlmeCommStatusIndicationCallback;
+
+//!< LLDN callback Amendment
+typedef Callback<void, MlmeLLDNDiscoveryRequstParams> MlmeLLDNDiscoveryRequstCallback;
+typedef Callback<void, MlmeLLDNDiscoveryConfirmsParams> MlmeLLDNDiscoveryConfirmCallback;
+typedef Callback<void, MlmeLLDNConfigurationRequestParams> MlmeLLDNConfigurationRequestCallback;
+typedef Callback<void, MlmeLLDNConfigurationConfirmParams> MlmeLLDNConfigurationConfirmCallback;
+typedef Callback<void, MlmeLLDNOnlineRequestParams> MlmeLLDNOnlineRequestCallback;
+typedef Callback<void, MlmeLLDNOnlineIndicationParams> MlmeLLDNOnlineIndicationCallback;
 
 /**
  * \ingroup lr-wpan
