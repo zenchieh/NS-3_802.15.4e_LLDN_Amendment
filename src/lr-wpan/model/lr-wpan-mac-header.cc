@@ -884,4 +884,145 @@ LrWpanLLMacHeader::GetSeqNum() const
     return m_SeqNum;
 }
 
+void
+LrWpanLLMacHeader::Serialize(Buffer::Iterator start) const
+{
+    Buffer::Iterator i = start;
+    uint16_t frameControl = GetFrameControl();
+    i.WriteHtolsbU16(frameControl);
+    i.WriteU8(GetSeqNum());
+
+    if (GetSecEnable())
+    {
+        //!< we dont enable security here, pedding
+        // i.WriteU8(GetSecControl());
+        // i.WriteHtolsbU32(GetFrmCounter());
+
+        // switch (m_secctrlKeyIdMode)
+        // {
+        // case IMPLICIT:
+        //     break;
+        // case NOKEYSOURCE:
+        //     i.WriteU8(GetKeyIdIndex());
+        //     break;
+        // case SHORTKEYSOURCE:
+        //     i.WriteHtolsbU32(GetKeyIdSrc32());
+        //     i.WriteU8(GetKeyIdIndex());
+        //     break;
+        // case LONGKEYSOURCE:
+        //     i.WriteHtolsbU64(GetKeyIdSrc64());
+        //     i.WriteU8(GetKeyIdIndex());
+        //     break;
+        // }
+    }
+}
+
+uint32_t
+LrWpanLLMacHeader::Deserialize(Buffer::Iterator start)
+{
+    Buffer::Iterator i = start;
+    uint16_t frameControl = i.ReadLsbtohU16();
+    SetFrameControl(frameControl);
+
+    SetSeqNum(i.ReadU8());
+    
+    if (GetSecEnable())
+    {
+        //!< we dont enable security here, pedding
+        // SetSecControl(i.ReadU8());
+        // SetFrmCounter(i.ReadLsbtohU32());
+
+        // switch (m_secctrlKeyIdMode)
+        // {
+        // case IMPLICIT:
+        //     break;
+        // case NOKEYSOURCE:
+        //     SetKeyId(i.ReadU8());
+        //     break;
+        // case SHORTKEYSOURCE:
+        //     SetKeyId(i.ReadLsbtohU32(), i.ReadU8());
+        //     break;
+        // case LONGKEYSOURCE:
+        //     SetKeyId(i.ReadLsbtohU64(), i.ReadU8());
+        //     break;
+        // }
+    }
+    return i.GetDistanceFrom(start);
+}
+
+uint32_t
+LrWpanLLMacHeader::GetSerializedSize() const
+{
+    /*
+     * Each mac header will have
+     * Frame Control      : 2 octet
+     * Sequence Number    : 1 Octet
+     * Aux Sec Header     : 0/5/6/10/14 octet
+     */
+
+    uint32_t size = 3;
+
+    // check if security is enabled
+    if (GetSecEnable())
+    {
+        //!< we dont enable security here, pedding
+        // size += 5;
+        // switch (m_secctrlKeyIdMode)
+        // {
+        // case IMPLICIT:
+        //     break;
+        // case NOKEYSOURCE:
+        //     size += 1;
+        //     break;
+        // case SHORTKEYSOURCE:
+        //     size += 5;
+        //     break;
+        // case LONGKEYSOURCE:
+        //     size += 9;
+        //     break;
+        // }
+    }
+    return (size);
+}
+
+void
+LrWpanLLMacHeader::Print(std::ostream& os) const
+{
+    os << "  General LL Frame MHR [Frame Control Field] " << "\n"
+       << "  Frame Type = " << (uint32_t)m_fctrlFrmType
+       << ", Sec Enable = " << (uint32_t)m_fctrlSecU
+       << ", Frame version = " << (uint32_t)m_fctrlFrmVersion
+       << ", Ack Request = " << (uint32_t)m_fctrlAckReq
+       << ", SubFrame Type = " << (uint32_t)m_fctrlSubFrametype;
+
+
+    os << "  General LL Frame MHR [Sequence number Field] " << "\n"
+       << ", Sequence Num = " << static_cast<uint16_t>(m_SeqNum);
+
+    //!< we dont enable security here, pedding
+    if (GetSecEnable())
+    {
+        // os << "  Security Level = " << static_cast<uint32_t>(m_secctrlSecLevel)
+        //    << ", Key Id Mode = " << static_cast<uint32_t>(m_secctrlKeyIdMode)
+        //    << ", Frame Counter = " << static_cast<uint32_t>(m_auxFrmCntr);
+
+        // switch (m_secctrlKeyIdMode)
+        // {
+        // case IMPLICIT:
+        //     break;
+        // case NOKEYSOURCE:
+        //     os << ", Key Id - Key Index = " << static_cast<uint32_t>(m_auxKeyIdKeyIndex);
+        //     break;
+        // case SHORTKEYSOURCE:
+        //     os << ", Key Id - Key Source 32 =" << static_cast<uint32_t>(m_auxKeyIdKeySrc32)
+        //        << ", Key Id - Key Index = " << static_cast<uint32_t>(m_auxKeyIdKeyIndex);
+        //     break;
+        // case LONGKEYSOURCE:
+        //     os << ", Key Id - Key Source 64 =" << static_cast<uint64_t>(m_auxKeyIdKeySrc64)
+        //        << ", Key Id - Key Index = " << static_cast<uint32_t>(m_auxKeyIdKeyIndex);
+        //     break;
+        // }
+    }
+}
+
 } // namespace ns3

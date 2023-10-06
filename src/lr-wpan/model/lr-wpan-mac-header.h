@@ -518,7 +518,6 @@ class LrWpanLLMacHeader : public Header
     /* Set Sequence number field of LL frame MHR */
     uint8_t GetSeqNum() const;
 
-    // TODO : add serialize & deserialize
     void Print(std::ostream& os) const override;
     uint32_t GetSerializedSize() const override;
     void Serialize(Buffer::Iterator start) const override;
