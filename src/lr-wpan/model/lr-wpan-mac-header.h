@@ -506,7 +506,7 @@ class LrWpanLLMacHeader : public Header
     /* Set Sequence number field of LL frame MHR */
     void SetSeqNum(uint8_t seqNum);
     
-    void LrWpanLLMacHeader::SetFrameControl(uint8_t frameControl);
+    void SetFrameControl(uint8_t frameControl);
     uint8_t GetFrameControl() const;
 
     /* Get Frame control field of LL frame MHR */

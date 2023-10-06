@@ -28,37 +28,37 @@
 
 using namespace ns3;
 
-static void
-BeaconIndication(MlmeBeaconNotifyIndicationParams params, Ptr<Packet> p)
-{
-    NS_LOG_UNCOND(Simulator::Now().GetSeconds()
-                  << " secs | Received BEACON packet of size " << p->GetSize());
-}
+// static void
+// BeaconIndication(MlmeBeaconNotifyIndicationParams params, Ptr<Packet> p)
+// {
+//     NS_LOG_UNCOND(Simulator::Now().GetSeconds()
+//                   << " secs | Received BEACON packet of size " << p->GetSize());
+// }
 
-static void
-DataIndication(McpsDataIndicationParams params, Ptr<Packet> p)
-{
-    NS_LOG_UNCOND(Simulator::Now().GetSeconds()
-                  << " secs | Received DATA packet of size " << p->GetSize());
-}
+// static void
+// DataIndication(McpsDataIndicationParams params, Ptr<Packet> p)
+// {
+//     NS_LOG_UNCOND(Simulator::Now().GetSeconds()
+//                   << " secs | Received DATA packet of size " << p->GetSize());
+// }
 
-static void
-TransEndIndication(McpsDataConfirmParams params)
-{
-    // In the case of transmissions with the Ack flag activated, the transaction is only
-    // successful if the Ack was received.
-    if (params.m_status == LrWpanMcpsDataConfirmStatus::IEEE_802_15_4_SUCCESS)
-    {
-        NS_LOG_UNCOND(Simulator::Now().GetSeconds() << " secs | Transmission successfully sent");
-    }
-}
+// static void
+// TransEndIndication(McpsDataConfirmParams params)
+// {
+//     // In the case of transmissions with the Ack flag activated, the transaction is only
+//     // successful if the Ack was received.
+//     if (params.m_status == LrWpanMcpsDataConfirmStatus::IEEE_802_15_4_SUCCESS)
+//     {
+//         NS_LOG_UNCOND(Simulator::Now().GetSeconds() << " secs | Transmission successfully sent");
+//     }
+// }
 
-static void
-DataIndicationCoordinator(McpsDataIndicationParams params, Ptr<Packet> p)
-{
-    NS_LOG_UNCOND(Simulator::Now().GetSeconds()
-                  << "s Coordinator Received DATA packet (size " << p->GetSize() << " bytes)");
-}
+// static void
+// DataIndicationCoordinator(McpsDataIndicationParams params, Ptr<Packet> p)
+// {
+//     NS_LOG_UNCOND(Simulator::Now().GetSeconds()
+//                   << "s Coordinator Received DATA packet (size " << p->GetSize() << " bytes)");
+// }
 
 static void
 DiscoveryConfirm(MlmeLLDNDiscoveryConfirmsParams params)

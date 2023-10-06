@@ -762,6 +762,12 @@ LrWpanLLMacHeader::LrWpanLLMacHeader()
 }
 
 void 
+LrWpanLLMacHeader::SetLLFrameType(LrWpanMacType frameType)
+{
+    m_fctrlFrmType = frameType;
+}
+
+void 
 LrWpanLLMacHeader::SetSecEnable()
 {
     m_fctrlSecU = 1;
