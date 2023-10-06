@@ -56,6 +56,7 @@ LrWpanMacHeader::LrWpanMacHeader(enum LrWpanMacType wpanMacType, uint8_t seqNum)
 
 LrWpanMacHeader::~LrWpanMacHeader()
 {
+
 }
 
 enum LrWpanMacHeader::LrWpanMacType
@@ -748,6 +749,139 @@ LrWpanMacHeader::Deserialize(Buffer::Iterator start)
         }
     }
     return i.GetDistanceFrom(start);
+}
+
+
+LrWpanLLMacHeader::LrWpanLLMacHeader()
+{
+    SetLLFrameType(LRWPAN_LLDN);
+    SetSecDisable();
+    SetFrameVersion(0); // check 802.15.4e section 5.2.3
+    SetNoAckReq();
+    SetSubFrameType(LL_DATA); // Assume Data frame
+}
+
+void 
+LrWpanLLMacHeader::SetSecEnable()
+{
+    m_fctrlSecU = 1;
+}
+
+void
+LrWpanLLMacHeader::SetSecDisable()
+{
+    m_fctrlSecU = 0;
+}
+
+void
+LrWpanLLMacHeader::SetFrameVersion(uint8_t frameVersion)
+{
+    m_fctrlFrmVersion = frameVersion;
+}
+
+void
+LrWpanLLMacHeader::SetAckReq()
+{
+    m_fctrlAckReq = 1;
+}
+
+void
+LrWpanLLMacHeader::SetNoAckReq()
+{
+    m_fctrlAckReq = 0;
+}
+
+void
+LrWpanLLMacHeader::SetSubFrameType(LrWpanSubMacType subframeType)
+{
+    m_fctrlSubFrametype = subframeType;
+}
+
+void
+LrWpanLLMacHeader::SetSeqNum(uint8_t seqNum)
+{
+    m_SeqNum = seqNum;
+}
+
+void
+LrWpanLLMacHeader::SetFrameControl(uint8_t frameControl)
+{
+    m_fctrlFrmType = (frameControl) & (0x07);           // Bit 0-2
+    m_fctrlSecU = (frameControl >> 3) & (0x01);         // Bit 3
+    m_fctrlFrmVersion = (frameControl >> 4) & (0x01);   // Bit 4
+    m_fctrlAckReq = (frameControl >> 5) & (0x01);       // Bit 5
+    m_fctrlSubFrametype = (frameControl >> 6) & (0x03); // Bit 6-7
+}
+
+enum LrWpanLLMacHeader::LrWpanMacType
+LrWpanLLMacHeader::GetLLFrameType() const
+{
+    switch (m_fctrlFrmType)
+    {
+    case 0:
+        return LRWPAN_MAC_BEACON;
+        break;
+    case 1:
+        return LRWPAN_MAC_DATA;
+        break;
+    case 2:
+        return LRWPAN_MAC_ACKNOWLEDGMENT;
+        break;
+    case 3:
+        return LRWPAN_MAC_COMMAND;
+        break;
+    case 4:
+        return LRWPAN_LLDN;
+        break;
+    case 5:
+        return LRWPAN_MULTIPURPOSE;
+        break;
+    default:
+        return LRWPAN_MAC_RESERVED;
+    }
+}
+
+uint8_t
+LrWpanLLMacHeader::GetFrameControl() const
+{
+    uint8_t val = 0;
+
+    val = m_fctrlFrmType & (0x07);                    // Bit 0-2
+    val |= (m_fctrlSecU << 3) & (0x01 << 3);          // Bit 3
+    val |= (m_fctrlFrmVersion << 4) & (0x01 << 4);    // Bit 4
+    val |= (m_fctrlAckReq << 5) & (0x01 << 5);        // Bit 5
+    val |= (m_fctrlSubFrametype << 6) & (0x03 << 6);  // Bit 6 - 7
+    return val;
+}
+
+uint8_t
+LrWpanLLMacHeader::GetSecEnable() const
+{
+    return m_fctrlSecU;
+}
+
+uint8_t
+LrWpanLLMacHeader::GetFrameVersion() const
+{
+    return m_fctrlFrmVersion;
+}
+
+bool
+LrWpanLLMacHeader::GetAckReq() const
+{
+    return m_fctrlAckReq;
+}
+
+uint8_t
+LrWpanLLMacHeader::GetSubFrameType() const
+{
+    return m_fctrlSubFrametype;
+}
+
+uint8_t
+LrWpanLLMacHeader::GetSeqNum() const
+{
+    return m_SeqNum;
 }
 
 } // namespace ns3

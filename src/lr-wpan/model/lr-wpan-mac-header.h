@@ -67,22 +67,7 @@ class LrWpanMacHeader : public Header
         LRWPAN_LLDN = 4,               //!< LRWPAN_LLDN
         LRWPAN_MULTIPURPOSE = 5,       //!, LRWPAN_MULTIPURPOSE 
         LRWPAN_MAC_RESERVED            //!< LRWPAN_MAC_RESERVED
-    };
-    
-    /**
-     * The possible MAC frame subtypes, see IEEE 802.15.4e-2012, Table 3c.
-     * Used in 
-     * general frame format
-     * - Frame control field
-     *   - Sub Frame type field
-     */
-    enum LrWpanSubMacType
-    {
-        LL_BEACON = 0,
-        LL_DATA   = 1,
-        LL_ACK    = 2,
-        LL_MAC_COMMAND = 3
-    };
+    };  
 
     /**
      * The addressing mode types, see IEEE 802.15.4-2006, Table 80.
@@ -469,6 +454,113 @@ class LrWpanMacHeader : public Header
     uint8_t m_auxKeyIdKeyIndex; //!< Auxiliary security header - Key Index (1 Octet)
 
 }; // LrWpanMacHeader
+
+
+class LrWpanLLMacHeader : public Header
+{
+    public:
+    
+    /**
+     * The possible MAC frame types, see IEEE 802.15.4-2006, Table 79 & 802.15.4e Table 2.
+     * Used in 
+     * general frame format
+     * - Frame control field
+     *   -  Frame type field
+     */
+    enum LrWpanMacType
+    {
+        LRWPAN_MAC_BEACON = 0,         //!< LRWPAN_MAC_BEACON
+        LRWPAN_MAC_DATA = 1,           //!< LRWPAN_MAC_DATA
+        LRWPAN_MAC_ACKNOWLEDGMENT = 2, //!< LRWPAN_MAC_ACKNOWLEDGMENT
+        LRWPAN_MAC_COMMAND = 3,        //!< LRWPAN_MAC_COMMAND
+        LRWPAN_LLDN = 4,               //!< LRWPAN_LLDN
+        LRWPAN_MULTIPURPOSE = 5,       //!, LRWPAN_MULTIPURPOSE 
+        LRWPAN_MAC_RESERVED            //!< LRWPAN_MAC_RESERVED
+    };
+
+    /**
+     * The possible MAC frame subtypes, see IEEE 802.15.4e-2012, Table 3c.
+     * Used in 
+     * general frame format
+     * - Frame control field
+     *   - Sub Frame type field
+     */
+    enum LrWpanSubMacType
+    {
+        LL_BEACON = 0,
+        LL_DATA   = 1,
+        LL_ACK    = 2,
+        LL_MAC_COMMAND = 3
+    };
+    
+    LrWpanLLMacHeader();
+
+    /* Set Frame control field of LL frame MHR */
+    void SetLLFrameType(LrWpanMacType frameType);
+    void SetSecEnable();
+    void SetSecDisable();
+    void SetFrameVersion(uint8_t frameVersion);
+    void SetAckReq();
+    void SetNoAckReq();
+    void SetSubFrameType(LrWpanSubMacType subframeType);
+    /* Set Sequence number field of LL frame MHR */
+    void SetSeqNum(uint8_t seqNum);
+    
+    void LrWpanLLMacHeader::SetFrameControl(uint8_t frameControl);
+    uint8_t GetFrameControl() const;
+
+    /* Get Frame control field of LL frame MHR */
+    enum LrWpanMacType GetLLFrameType() const;
+    uint8_t GetSecEnable() const;
+    uint8_t GetFrameVersion() const;
+    bool GetAckReq() const;
+    uint8_t GetSubFrameType() const;
+    /* Set Sequence number field of LL frame MHR */
+    uint8_t GetSeqNum() const;
+
+    // TODO : add serialize & deserialize
+    void Print(std::ostream& os) const override;
+    uint32_t GetSerializedSize() const override;
+    void Serialize(Buffer::Iterator start) const override;
+    uint32_t Deserialize(Buffer::Iterator start) override;
+
+    private:
+
+    /* Frame Control 1 Octets */
+    /* Frame Control field - see IEEE-802.15.4e section 5.2.2.5.1 */
+    uint8_t m_fctrlFrmType;        //!< Frame Control field Bit 0-2  = 0 - Beacon, 1 - Data, 2 - Ack, 3 - MAC Command, 4 - LLDN , 5 - Multipurpose
+    uint8_t m_fctrlSecU;           //!< Frame Control field Bit 3    = 0 - no AuxSecHdr ,  1 - security
+    uint8_t m_fctrlFrmVersion;     //!< Frame Control field Bit 4
+    uint8_t m_fctrlAckReq;         //!< Frame Control field Bit 5
+    uint8_t m_fctrlSubFrametype;   //!< Frame Control field Bit 6-7
+
+    /* Sequence Number */
+    uint8_t m_SeqNum; //!< Sequence Number (1 Octet)
+
+    /* Auxiliary Security Header - See - See IEEE-802.15.4e section 7.4  - 0, 5, 6, 10 or 14 Octets */
+    // uint8_t m_auxSecCtrl;              // 1 Octet see below
+
+
+    /* Security Control fields */
+    uint8_t m_secctrlSecLevel;  //!< Auxiliary security header - Security Control field - Bit 0-2
+    uint8_t m_secctrlKeyIdMode; //!< Auxiliary security header - Security Control field - Bit 3-4
+                                //!< will indicate size of Key Id
+                                // = 0 - Key is determined implicitly
+                                //       from originator and recipient
+                                // = 1 - 1 Octet Key Index
+                                // = 2 - 1 Octet Key Index and 4 oct Key src
+                                // = 3 - 1 Octet Key Index and 8 oct Key src
+
+    uint8_t m_secctrlRFrmCounterSuppression;
+    uint8_t m_secctrlRFrmCounterSize;
+    uint8_t m_secctrlReserved; //!< Auxiliary security header - Security Control field - Bit 5-7
+    /* Frame Counter fields */
+    uint32_t m_auxFrmCntr; //!< Auxiliary Frame Counter
+    /* Key Identifier fields */
+    uint8_t m_auxKeyIdKeyIndex; //!< Auxiliary security header - Key Index
+
+
+}; // LrWpanLLMacHeader
 
 }; // namespace ns3
 
