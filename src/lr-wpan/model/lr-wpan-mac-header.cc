@@ -1025,4 +1025,21 @@ LrWpanLLMacHeader::Print(std::ostream& os) const
     }
 }
 
+TypeId
+LrWpanLLMacHeader::GetTypeId()
+{
+    static TypeId tid = TypeId("ns3::LrWpanMacHeader")
+                            .SetParent<Header>()
+                            .SetGroupName("LrWpan")
+                            .AddConstructor<LrWpanMacHeader>();
+    return tid;
+}
+
+TypeId
+LrWpanLLMacHeader::GetInstanceTypeId() const
+{
+    return GetTypeId();
+}
+
+
 } // namespace ns3

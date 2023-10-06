@@ -99,6 +99,12 @@ class BeaconPayloadHeader : public Header
  * Implements the header for the MAC payload command frame according to
  * the IEEE 802.15.4-2011 Std.
  */
+
+class LLBeaconPayloadHeader : public Header
+{
+  // TODOs
+};
+
 class CommandPayloadHeader : public Header
 {
   public:
