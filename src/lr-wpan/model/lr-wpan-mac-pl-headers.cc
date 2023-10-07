@@ -129,6 +129,197 @@ BeaconPayloadHeader::GetPndAddrFields() const
 }
 
 /***********************************************************
+ *                LL Beacon MAC Payload
+ ***********************************************************/
+
+LLBeaconPayloadHeader::LLBeaconPayloadHeader()
+{    
+}
+
+NS_OBJECT_ENSURE_REGISTERED(LLBeaconPayloadHeader);
+
+TypeId
+LLBeaconPayloadHeader::GetTypeId()
+{
+    static TypeId tid = TypeId("ns3::LLBeaconPayloadHeader")
+                            .SetParent<Header>()
+                            .SetGroupName("LrWpan")
+                            .AddConstructor<LLBeaconPayloadHeader>();
+    return tid;
+}
+
+TypeId
+LLBeaconPayloadHeader::GetInstanceTypeId() const
+{
+    return GetTypeId();
+}
+
+uint32_t
+LLBeaconPayloadHeader::GetSerializedSize() const
+{
+
+    /*        * Format of LL Beacon payload *
+        Flags                                    1 byte
+        LLDN PAN coordinator ID field            1 byte
+        Configuation Sequence Number             1 byte
+        TimeSlot size                            1 byte  
+        Number of Base Timeslots in superframe 0/1 byte //! Note : This field present only in Online mode
+        Group Ack Bitmap                       0/2 byte //! Note : This field present only in Online mode
+        ------------------------------------------------
+        Total :                                4/7 bytes
+    */
+    uint32_t size = 0;
+    size += m_flagsFields.GetSerializedSize();
+    
+    if(m_flagsFields.GetTransmissionState() == FlagsField::ONLINE_STATE)
+    {
+        size += 7;
+    }
+    else
+    {
+        size += 4;
+    }
+
+    return size;
+}
+
+void
+LLBeaconPayloadHeader::Serialize(Buffer::Iterator start) const
+{
+    Buffer::Iterator i = start;
+    i = m_flagsFields.Serialize(i);
+    WriteTo(i,m_LLPanCoordIdFields);
+    i.WriteU8(m_configurationSeqNum);
+    i.WriteU8(m_timeslotSize);
+    // Check if it is Onlie State
+    if(m_flagsFields.GetTransmissionState() == FlagsField::ONLINE_STATE)
+    {
+        i.WriteU8(m_numOfBaseTSinSuperframe);
+        i.WriteU16(m_groupAckBmp); // TODO : Need to check sanity
+    }
+}
+
+uint32_t
+LLBeaconPayloadHeader::Deserialize(Buffer::Iterator start)
+{
+    Buffer::Iterator i = start;
+    i = m_flagsFields.Deserialize(i);
+    ReadFrom(i,m_LLPanCoordIdFields);
+    m_configurationSeqNum = i.ReadU8();
+    m_timeslotSize = i.ReadU8();
+    // Check if it is Onlie State
+    if(m_flagsFields.GetTransmissionState() == FlagsField::ONLINE_STATE)
+    {
+        m_numOfBaseTSinSuperframe = i.ReadU8();
+        m_groupAckBmp = i.ReadU16(); // TODO : Need to check sanity
+    }
+    return i.GetDistanceFrom(start);
+}
+
+void
+LLBeaconPayloadHeader::Print(std::ostream& os) const
+{
+    /*        * Format of LL Beacon payload *
+    Flags                                    1 byte
+    LLDN PAN coordinator ID field            1 byte
+    Configuation Sequence Number             1 byte
+    TimeSlot size                            1 byte  
+    Number of Base Timeslots in superframe 0/1 byte //! Note : This field present only in Online mode
+    Group Ack Bitmap                       0/2 byte //! Note : This field present only in Online mode
+    ------------------------------------------------
+    Total :                                4/7 bytes
+    */
+    if(m_flagsFields.GetTransmissionState() == FlagsField::ONLINE_STATE)
+    {
+        os  << "| Flags Field | = " << m_flagsFields << "\n"
+            << "| PAN-C addr | = " << m_LLPanCoordIdFields << "\n"
+            << "| Configuation Sequence Number | =" << m_configurationSeqNum  << "\n"
+            << "| TimeSlot size | =" << m_timeslotSize << "\n"
+            << "| Number of Base Timeslots in superframe | =" << m_numOfBaseTSinSuperframe << "\n"
+            << "| Group Ack Bitmap | =" << m_groupAckBmp << "\n";
+    }
+    else
+    {
+        os  << "| Flags Field | = " << m_flagsFields << "\n"
+            << "| PAN-C addr | = " << m_LLPanCoordIdFields << "\n"
+            << "| Configuation Sequence Number | =" << m_configurationSeqNum  << "\n"
+            << "| TimeSlot size | =" << m_timeslotSize << "\n";
+    }
+}
+
+
+void 
+LLBeaconPayloadHeader::SetFlagsFields(FlagsField flagsFields)
+{
+    m_flagsFields = flagsFields;
+}
+
+void 
+LLBeaconPayloadHeader::SetLLPanCoordAddr(Mac8Address panCAddr)
+{
+    m_LLPanCoordIdFields = panCAddr;
+}
+
+void 
+LLBeaconPayloadHeader::SetConfigurationSeqNum(uint8_t configurationSeqNum)
+{
+    m_configurationSeqNum = configurationSeqNum;
+}
+
+void
+LLBeaconPayloadHeader::SetBaseTimeSlotSize(uint8_t baseTimeSlotSize)
+{
+    m_timeslotSize = baseTimeSlotSize;
+}
+
+void
+LLBeaconPayloadHeader::SetNumOfBaseTsInSuperframe(uint8_t numOfBaseTSinSuperframe)
+{
+    m_numOfBaseTSinSuperframe = numOfBaseTSinSuperframe;
+}
+
+void 
+LLBeaconPayloadHeader::SetgroupAckBmp(uint16_t groupAckBmp)
+{
+    m_groupAckBmp = groupAckBmp;
+}
+
+FlagsField 
+LLBeaconPayloadHeader::GetFlagsFields() const
+{
+    return m_flagsFields;
+}
+Mac8Address
+LLBeaconPayloadHeader::GetLLPanCoordAddr() const
+{
+    return m_LLPanCoordIdFields;
+}
+uint8_t 
+LLBeaconPayloadHeader::GetConfigurationSeqNum() const
+{
+    return m_configurationSeqNum;
+}
+
+uint8_t 
+LLBeaconPayloadHeader::GetBaseTimeSlotSize() const
+{
+    return m_timeslotSize;
+}
+
+uint8_t 
+LLBeaconPayloadHeader::GetNumOfBaseTsInSuperframe() const
+{
+    return m_numOfBaseTSinSuperframe;
+}
+
+uint16_t 
+LLBeaconPayloadHeader::GetgroupAckBmp() const
+{
+    return m_groupAckBmp;
+}
+
+
+/***********************************************************
  *                Command MAC Payload
  ***********************************************************/
 

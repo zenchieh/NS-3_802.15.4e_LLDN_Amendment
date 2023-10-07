@@ -647,6 +647,12 @@ FlagsField::IsMgmtTsEnabled()
     return m_timeSlotPerMgmtTS;
 }
 
+bool
+FlagsField::IsOnlineState()
+{
+    return (m_transmissionState == ONLINE_STATE);
+}
+
 uint8_t 
 FlagsField::GetTransmissionState() const
 {

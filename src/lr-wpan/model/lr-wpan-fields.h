@@ -482,6 +482,7 @@ class FlagsField
 
     bool IsDownLink();
     bool IsMgmtTsEnabled();
+    bool IsOnlineState();
     
     uint8_t GetTransmissionState() const;
     bool GetTransmissionDirection() const;

@@ -1034,10 +1034,10 @@ LrWpanLLMacHeader::Print(std::ostream& os) const
 TypeId
 LrWpanLLMacHeader::GetTypeId()
 {
-    static TypeId tid = TypeId("ns3::LrWpanMacHeader")
+    static TypeId tid = TypeId("ns3::LrWpanLLMacHeader")
                             .SetParent<Header>()
                             .SetGroupName("LrWpan")
-                            .AddConstructor<LrWpanMacHeader>();
+                            .AddConstructor<LrWpanLLMacHeader>();
     return tid;
 }
 

@@ -97,7 +97,7 @@ class BeaconPayloadHeader : public Header
 /**
  * \ingroup lr-wpan
  * Implements the header for the MAC payload command frame according to
- * the IEEE 802.15.4-2011 Std.
+ * the IEEE 802.15.4e-2011 section 5.2.2.5.2 LL Beacon frame format
  */
 
 class LLBeaconPayloadHeader : public Header
@@ -106,16 +106,42 @@ class LLBeaconPayloadHeader : public Header
 
   public:
 
-  LLBeaconPayloadHeader();
+    LLBeaconPayloadHeader();
 
+    static TypeId GetTypeId();
+    TypeId GetInstanceTypeId() const override;
+    uint32_t GetSerializedSize() const override;
+    void Serialize(Buffer::Iterator start) const override;
+    uint32_t Deserialize(Buffer::Iterator start) override;
+    void Print(std::ostream& os) const override;
+
+    void SetFlagsFields(FlagsField flagsFields);
+    void SetLLPanCoordAddr(Mac8Address panCAddr);
+    void SetConfigurationSeqNum(uint8_t configurationSeqNum);
+    void SetBaseTimeSlotSize(uint8_t baseTimeSlotSize);
+    void SetNumOfBaseTsInSuperframe(uint8_t numOfBaseTSinSuperframe);
+    void SetgroupAckBmp(uint16_t groupAckBmp);
+
+    FlagsField GetFlagsFields() const;
+    Mac8Address GetLLPanCoordAddr() const;
+    uint8_t GetConfigurationSeqNum() const;
+    uint8_t GetBaseTimeSlotSize() const;
+    uint8_t GetNumOfBaseTsInSuperframe() const;
+    uint16_t GetgroupAckBmp() const;
 
 
 
   private:
 
-  uint8_t m_flags;
-  
-
+    FlagsField m_flagsFields;          // The Flags field contains control information.
+    Mac8Address m_LLPanCoordIdFields;  // 8-bit simple address (i.e., macSimpleAddress) of the LLDN PAN coordinator.
+    uint8_t m_configurationSeqNum;     // Identify the PAN-C ID & Configuration
+    uint8_t m_timeslotSize;            // Length of a base timeslot
+    uint8_t m_numOfBaseTSinSuperframe; // corresponds to macLLDNnumTimeSlot (Uplink + Bidirectional TS time length) 
+                                       //! Note : This field present only in Online mode
+    uint16_t m_groupAckBmp;            // Only present in online mode 
+                                       //! Note : This field present only in Online mode
+    
 };
 
 class CommandPayloadHeader : public Header
