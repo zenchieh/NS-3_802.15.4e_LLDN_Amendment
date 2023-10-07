@@ -103,6 +103,19 @@ class BeaconPayloadHeader : public Header
 class LLBeaconPayloadHeader : public Header
 {
   // TODOs
+
+  public:
+
+  LLBeaconPayloadHeader();
+
+
+
+
+  private:
+
+  uint8_t m_flags;
+  
+
 };
 
 class CommandPayloadHeader : public Header
@@ -208,6 +221,8 @@ class CommandPayloadHeader : public Header
      * Get the Short address assigned by the coordinator (Association Response Command).
      * \return The Mac16Address assigned by the coordinator
      */
+
+    // TODO : add LLDN GET & SET FUNCTIONS
     Mac16Address GetShortAddr() const;
     /**
      * Get the status resulting from an association request (Association Response Command).

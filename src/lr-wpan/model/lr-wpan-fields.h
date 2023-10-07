@@ -443,6 +443,68 @@ class CapabilityField
 
 std::ostream& operator<<(std::ostream& os, const CapabilityField& capabilityField);
 
+
+//!< Add LLDN Beacon frame payload field.
+
+/**
+ * \ingroup lr-wpan
+ *
+ * Represent Flags Field of LL beacon frame payload.
+ * See IEEE 802.15.4e-2011, Section 5.2.2.5.2 Figure 48d
+ */
+class FlagsField
+{
+  public:
+    FlagsField();
+
+    enum TransmissionState
+    {
+        ONLINE_STATE        = 0b000,
+        DISCOVERY_STATE     = 0b100,
+        CONFIGURATION_STATE = 0b110,
+        RESET_STATE         = 0b111
+    };
+
+    enum TransmissionDirection
+    {
+        UPLINK = 0,
+        DOWNLINK = 1
+    };
+
+
+    uint32_t GetSerializedSize() const;
+    Buffer::Iterator Serialize(Buffer::Iterator i) const;
+    Buffer::Iterator Deserialize(Buffer::Iterator i);
+
+    void SetTransmissionState(TransmissionState transmissionState);
+    void SetTransmissionDirection(TransmissionDirection transmissionDirection);
+    void SetTimeSlotPerMgmtTS(uint8_t timeSlotPerMgmtTS);    
+
+    bool IsDownLink();
+    bool IsMgmtTsEnabled();
+    
+    uint8_t GetTransmissionState() const;
+    bool GetTransmissionDirection() const;
+    uint8_t GetTimeSlotPerMgmtTS() const;
+
+  private:
+    uint8_t m_transmissionState;        //!< Flags Field, Transmission State  (bit 1)
+                                        //!< See enum TransmissionState
+
+    uint8_t m_transmissionDirection;    //!< Flags Field, Transmission Direction (bit 2) -  the transmission direction of all bidirectional timeslots during superframe
+                                        //!< 0 - the direction of all bidirectional timeslots is uplink
+                                        //!< 1 - the direction of all bidirectional timeslots is downlink
+
+    uint8_t m_reserved;                 //!< Flags Field, Reserved (bit 3)
+
+    uint8_t m_timeSlotPerMgmtTS;        //!< Flags Field, Number of Base Timeslots per Management Timeslot (bit 5-7)
+                                        //!< 0 - there is no mgmt timslot in superframe
+                                        //!< x - the number of base timeslots per management timeslot
+};
+
+std::ostream& operator<<(std::ostream& os, const FlagsField& FlagsField);
+
+
 } // end namespace ns3
 
 #endif /* LR_WPAN_FIELDS_H */

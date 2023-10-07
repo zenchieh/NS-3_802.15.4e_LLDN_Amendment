@@ -608,4 +608,105 @@ operator<<(std::ostream& os, const CapabilityField& capabilityField)
     return os;
 }
 
+// LLDN amendment
+
+FlagsField::FlagsField()
+{
+    SetTransmissionState(DISCOVERY_STATE);
+    SetTransmissionDirection(UPLINK);
+    SetTimeSlotPerMgmtTS(0); // Disable MgmtTS
+}
+
+void
+FlagsField::SetTransmissionState(TransmissionState transmissionState)
+{
+    m_transmissionState = transmissionState;
+}
+
+void 
+FlagsField::SetTransmissionDirection(TransmissionDirection transmissionDirection)
+{
+    m_transmissionDirection = transmissionDirection;
+}
+
+void 
+FlagsField::SetTimeSlotPerMgmtTS(uint8_t timeSlotPerMgmtTS)
+{
+    m_timeSlotPerMgmtTS = timeSlotPerMgmtTS;
+}
+
+bool
+FlagsField::IsDownLink()
+{
+    return (m_transmissionDirection == DOWNLINK);
+}
+
+bool
+FlagsField::IsMgmtTsEnabled()
+{
+    return m_timeSlotPerMgmtTS;
+}
+
+uint8_t 
+FlagsField::GetTransmissionState() const
+{
+    return m_transmissionState;
+}
+
+bool 
+FlagsField::GetTransmissionDirection() const
+{
+    return m_transmissionDirection;
+}
+
+uint8_t 
+FlagsField::GetTimeSlotPerMgmtTS() const
+{
+    return m_timeSlotPerMgmtTS;
+}
+
+uint32_t
+FlagsField::GetSerializedSize() const
+{
+    uint32_t flagsFieldSize;
+    flagsFieldSize = 1; // 1 byte
+    return flagsFieldSize;
+}
+
+Buffer::Iterator
+FlagsField::Serialize(Buffer::Iterator i) const
+{
+    uint8_t capability = 0;
+
+    capability = m_transmissionState & (0x07);                   //!< Bit 0-2  Transmission State
+    capability |= (m_transmissionDirection << 3) & (0x01 << 3);  //!< Bit 3
+    // capability |= (m_reserved << 4) & (0x01 << 1);            //!< Bit 4 (Reserved)
+    capability |= (m_timeSlotPerMgmtTS << 5) & (0x07 << 5);      //!< Bit 5-7
+
+    i.WriteU8(capability);
+    return i;
+}
+
+Buffer::Iterator
+FlagsField::Deserialize(Buffer::Iterator i)
+{
+    uint8_t capability = i.ReadU8();
+
+    m_transmissionState = capability & (0x07);              //!< Bit 0-2  Transmission State
+    m_transmissionDirection = (capability >> 3) & (0x01);   //!< Bit 3    Transmission Direction
+    //m_reserved = (capability >> 4) & (0x01);              //!< Bit 4    (Reserved)
+    m_timeSlotPerMgmtTS = (capability >> 5) & (0x07);       //!< Bit 5-7  Number of Base Timeslots per Management Timeslot
+
+    return i;
+}
+
+std::ostream&
+operator<<(std::ostream& os, const FlagsField& flgasField)
+{
+    os << "  TransmissionState = " << bool(flgasField.GetTransmissionState())
+       << ", Transmission Direction (0 for UL 1 for DL) = " << bool(flgasField.GetTransmissionDirection())
+       << ",  Number of Base Timeslots per Management Timeslot  = " << bool(flgasField.GetTimeSlotPerMgmtTS());
+    return os;
+}
+
 } // namespace ns3
