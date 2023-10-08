@@ -26,6 +26,14 @@
 
 #include <iostream>
 
+/* Define base timeslot calculation parameters */
+/* Unit : symblos */
+#define NUM_PHY_HDR               6  // (Uint : symblos) , (p) Number of octets of PHY header
+#define NUM_MAC_OVERHEAD          3  // (Uint : symblos) , (m) Number of octets of MAC overhead (MHR + MFR) for LL-DATA frames
+#define MAX_DATA_PAYLOAD         40  // (Uint : symblos) , (n) Maximum expected number of octets of data payload, rcv from beacon frame - Timeslot size field
+#define NUM_PHY_HEADER_PER_OCTECT 2  // (Uint : symblos/octect) , (sp) Number of symbols per octet in PHY header
+#define NUM_PSDU_PER_OCTECT       2  // (Uint : symblos/octect) , (sm) Number of symbols per octet in PSDU
+#define SYMBOL_RATE           62500  // (Uint : symbols/s) , (v) Symbol rate
 using namespace ns3;
 
 // static void
@@ -75,7 +83,8 @@ ConfigurationConfirm(MlmeLLDNConfigurationConfirmParams params)
 static void
 OnlineIndication(MlmeLLDNOnlineIndicationParams params)
 {
-
+    NS_LOG_UNCOND(Simulator::Now().GetSeconds()
+                  << " secs | Switch to Online State." << "\n");
 }
 
 int
@@ -92,11 +101,11 @@ main(int argc, char* argv[])
     Ptr<Node> node_LLDN_PAN_C = CreateObject<Node>();
     Ptr<Node> node_LLDN_device = CreateObject<Node>();
 
-    Ptr<LrWpanNetDevice> dev0_PAN_C = CreateObject<LrWpanNetDevice>();
-    Ptr<LrWpanNetDevice> dev1_device = CreateObject<LrWpanNetDevice>();
+    Ptr<LrWpanNetDevice> dev1_PAN_C = CreateObject<LrWpanNetDevice>();
+    Ptr<LrWpanNetDevice> dev2_device = CreateObject<LrWpanNetDevice>();
 
-    dev0_PAN_C->SetAddress(Mac8Address("1"));
-    dev1_device->SetAddress(Mac8Address("2"));
+    dev1_PAN_C->SetAddress(Mac8Address("1"));
+    dev2_device->SetAddress(Mac8Address("2"));
 
     Ptr<SingleModelSpectrumChannel> channel = CreateObject<SingleModelSpectrumChannel>();
     Ptr<LogDistancePropagationLossModel> propModel =
@@ -106,51 +115,70 @@ main(int argc, char* argv[])
     channel->AddPropagationLossModel(propModel);
     channel->SetPropagationDelayModel(delayModel);
 
-    dev0_PAN_C->SetChannel(channel);
-    dev1_device->SetChannel(channel);
+    dev1_PAN_C->SetChannel(channel);
+    dev2_device->SetChannel(channel);
 
-    node_LLDN_PAN_C->AddDevice(dev0_PAN_C);
-    node_LLDN_device->AddDevice(dev1_device);
+    node_LLDN_PAN_C->AddDevice(dev1_PAN_C);
+    node_LLDN_device->AddDevice(dev2_device);
 
     ///////////////// Mobility   ///////////////////////
-    Ptr<ConstantPositionMobilityModel> sender0Mobility =
-        CreateObject<ConstantPositionMobilityModel>();
-    sender0Mobility->SetPosition(Vector(0, 0, 0));
-    dev0_PAN_C->GetPhy()->SetMobility(sender0Mobility);
     Ptr<ConstantPositionMobilityModel> sender1Mobility =
         CreateObject<ConstantPositionMobilityModel>();
+    sender1Mobility->SetPosition(Vector(0, 0, 0));
+    dev1_PAN_C->GetPhy()->SetMobility(sender1Mobility);
+    Ptr<ConstantPositionMobilityModel> sender2Mobility =
+        CreateObject<ConstantPositionMobilityModel>();
 
-    sender1Mobility->SetPosition(Vector(0, 10, 0)); // 10 m distance
-    dev1_device->GetPhy()->SetMobility(sender1Mobility);
+    sender2Mobility->SetPosition(Vector(0, 10, 0)); // 10 m distance
+    dev2_device->GetPhy()->SetMobility(sender2Mobility);
 
     /////// MAC layer Callbacks hooks/////////////
     // Set LLDN association callback
     MlmeLLDNDiscoveryConfirmCallback discoveryConfirmCallBack;
     discoveryConfirmCallBack = MakeCallback(&DiscoveryConfirm);
-    dev0_PAN_C->GetMac()-> SetMlmeLLDNDiscoveryConfirmCallback(discoveryConfirmCallBack);
+    dev1_PAN_C->GetMac()-> SetMlmeLLDNDiscoveryConfirmCallback(discoveryConfirmCallBack);
 
     MlmeLLDNConfigurationConfirmCallback configurationConfirmCallBack;
     configurationConfirmCallBack = MakeCallback(&ConfigurationConfirm);
-    dev0_PAN_C->GetMac()-> SetMlmeLLDNConfigurationConfirmCallback(configurationConfirmCallBack);
+    dev1_PAN_C->GetMac()-> SetMlmeLLDNConfigurationConfirmCallback(configurationConfirmCallBack);
 
     MlmeLLDNOnlineIndicationCallback onlineIndicationCallBack;
     onlineIndicationCallBack = MakeCallback(&OnlineIndication);
-    dev1_device->GetMac()-> SetMlmeLLDNOnlineIndicationCallback(onlineIndicationCallBack);
+    dev2_device->GetMac()-> SetMlmeLLDNOnlineIndicationCallback(onlineIndicationCallBack);
 
 
     // TODO set LLDN params
 
-    //////////// Manual device association ////////////////////
-    // Note: We manually associate the devices to a PAN coordinator
-    //       because currently there is no automatic association behavior (bootstrap);
-    //       The PAN COORDINATOR does not need to associate or set its
-    //       PAN Id or its own coordinator id, these are set
-    //       by the MLME-start.request primitive when used.
+    /***************************/
+    /*     Discovery State     */
+    /***************************/
 
-    dev1_device->GetMac()->SetPanId(5);
-    dev1_device->GetMac()->SetAssociatedCoor(Mac16Address("00:01"));
+    int dataPayloadSize = MAX_DATA_PAYLOAD;
+
+    // Set PAN-C Discovery state parameters
+    dev1_PAN_C->GetMac()->SetMacLLDNcoordinator(true);
+    dev1_PAN_C->GetMac()->SetLLDNModeEnabled();     /* In discovery state must have two mgmt timeslot */
+    dev1_PAN_C->GetMac()->SetMacLLDNmgmtTSEnabled();
+    dev1_PAN_C->GetMac()->SetAssociatedCoor(Mac8Address("1"));
+    dev1_PAN_C->GetMac()->SetMlmeLLDNTransmissionState(FlagsField::DISCOVERY_STATE);
+    dev1_PAN_C->GetMac()->SetMlmeLLDNTransmissionDirection(FlagsField::DOWNLINK);
+    dev1_PAN_C->GetMac()->SetMlmeLLDNTimeSlotPerMgmtTS(2); // For one Uplink mgmt timeslot and one Downlink mgmt timeslot
+    dev1_PAN_C->GetMac()->SetMlmeLLDNTimeslotSize(MAX_DATA_PAYLOAD);
+    
+    // TODO: Set LLDN device Discovery state parameters
+    dev2_device->GetMac()->SetLLDNModeEnabled();
+    dev2_device->GetMac()->SetSimpleAddress(Mac8Address("2"));
+    dev2_device->GetMac()->SetMlmeLLDNTransmissionState(FlagsField::DISCOVERY_STATE);
 
     ///////////////////// Start transmitting beacons from coordinator ////////////////////////
+
+
+    // Simulator::ScheduleWithContext(1,
+    //                                Seconds(2.0),
+    //                                //TODO
+    //                                &LrWpanMac::MlmeLLDiscoveryStart,
+    //                                dev1_PAN_C->GetMac(),
+    //                                params);
 
     MlmeStartRequestParams params;
     params.m_panCoor = true;
@@ -160,7 +188,7 @@ main(int argc, char* argv[])
     Simulator::ScheduleWithContext(1,
                                    Seconds(2.0),
                                    &LrWpanMac::MlmeStartRequest,
-                                   dev0_PAN_C->GetMac(),
+                                   dev1_PAN_C->GetMac(),
                                    params);
 
     ///////////////////// Transmission of data Packets from end device //////////////////////
@@ -187,12 +215,12 @@ main(int argc, char* argv[])
     // 2.93 sec       Enough time, the packet can be transmitted within the CAP of the first
     // superframe
 
-    // MCPS-DATA.request Beacon enabled Direct Transmission (dev1_device)
+    // MCPS-DATA.request Beacon enabled Direct Transmission (dev2_device)
     // Frame transmission from End Device to Coordinator (Direct transmission)
     Simulator::ScheduleWithContext(1,
                                    Seconds(2.93),
                                    &LrWpanMac::McpsDataRequest,
-                                   dev1_device->GetMac(),
+                                   dev2_device->GetMac(),
                                    params2,
                                    p1);
 

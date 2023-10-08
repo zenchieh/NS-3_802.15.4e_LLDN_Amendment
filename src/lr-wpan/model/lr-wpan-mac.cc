@@ -185,6 +185,7 @@ LrWpanMac::LrWpanMac()
 
     m_macLIFSPeriod = 40;
     m_macSIFSPeriod = 12;
+    aMaxSIFIFrameSize = 18; // unit : bytes
 
     m_panCoor = false;
     m_macBeaconOrder = 15;
@@ -227,6 +228,7 @@ LrWpanMac::LrWpanMac()
     m_macLLDNlowLatencyNWid = 0xff;
     m_macLLDNdiscoveryModeTimeout = 256;
     m_macLLDNcoordinator = false;
+    m_mlmeLLTimeslotSize = 40; // Maximum LL frame data payload size in octect
 }
 
 LrWpanMac::~LrWpanMac()
@@ -315,6 +317,13 @@ LrWpanMac::SetRxOnWhenIdle(bool rxOnWhenIdle)
             m_phy->PlmeSetTRXStateRequest(IEEE_802_15_4_PHY_TRX_OFF);
         }
     }
+}
+
+void
+LrWpanMac::SetSimpleAddress(Mac8Address address)
+{
+    NS_LOG_FUNCTION(this << address);
+    m_simpleAddress = address;
 }
 
 void
@@ -840,6 +849,13 @@ LrWpanMac::MlmePollRequest(MlmePollRequestParams params)
     NS_FATAL_ERROR(this << " Poll request currently not supported");
 }
 
+
+void
+LrWpanMac::MlmeLLDiscoveryStart()
+{
+    SendOneLLBeacon();
+}
+
 void
 LrWpanMac::SendOneBeacon()
 {
@@ -876,6 +892,80 @@ LrWpanMac::SendOneBeacon()
 
     beaconPacket->AddHeader(macPayload);
     beaconPacket->AddHeader(macHdr);
+
+    // Calculate FCS if the global attribute ChecksumEnable is set.
+    if (Node::ChecksumEnabled())
+    {
+        macTrailer.EnableFcs(true);
+        macTrailer.SetFcs(beaconPacket);
+    }
+
+    beaconPacket->AddTrailer(macTrailer);
+
+    // Set the Beacon packet to be transmitted
+    m_txPkt = beaconPacket;
+
+    if (m_csmaCa->IsSlottedCsmaCa())
+    {
+        m_outSuperframeStatus = BEACON;
+        NS_LOG_DEBUG("Outgoing superframe Active Portion (Beacon + CAP + CFP): "
+                     << m_superframeDuration << " symbols");
+    }
+
+    ChangeMacState(MAC_SENDING);
+    m_phy->PlmeSetTRXStateRequest(IEEE_802_15_4_PHY_TX_ON);
+}
+
+void
+LrWpanMac::SendOneLLBeacon()
+{
+    NS_LOG_FUNCTION(this);
+    //NS_ASSERT();
+
+    LrWpanLLMacHeader llMacHeader(LrWpanLLMacHeader::LRWPAN_LLDN, LrWpanLLMacHeader::LL_BEACON);
+    
+    llMacHeader.SetSecDisable();
+    llMacHeader.SetAckReq();
+
+    LLBeaconPayloadHeader llMacPayload;
+    Ptr<Packet> beaconPacket = Create<Packet>();
+    LrWpanMacTrailer macTrailer;
+
+    // void SetFlagsFields(FlagsField flagsFields);
+    // void SetLLPanCoordAddr(Mac8Address panCAddr);
+    // void SetConfigurationSeqNum(uint8_t configurationSeqNum);
+    // void SetBaseTimeSlotSize(uint8_t baseTimeSlotSize);
+    // TODO
+    // void SetNumOfBaseTsInSuperframe(uint8_t numOfBaseTSinSuperframe);
+    // void SetgroupAckBmp(uint16_t groupAckBmp);
+
+    // Implements the header for the MAC payload command frame according to
+    // the IEEE 802.15.4e-2011 section 5.2.2.5.2 LL Beacon frame format
+
+    // Set Beacon payload
+    llMacPayload.SetFlagsFields(GetFlagsField());               // octect 1
+    llMacPayload.SetLLPanCoordAddr(m_macCoordSimpleAddress);    // octect 2
+    llMacPayload.SetConfigurationSeqNum(m_mlmeLLConfigurationSeq);
+    m_mlmeLLConfigurationSeq++;
+    if(m_mlmeLLConfigurationSeq > 255)
+    {
+        NS_LOG_DEBUG("m_mlmeLLConfigurationSeq overflow, reuse variable, set 0"
+                     << "\n");
+        m_mlmeLLConfigurationSeq = 0;
+    }
+    llMacPayload.SetBaseTimeSlotSize(m_mlmeLLTimeslotSize);
+
+    // Check if it is Online state , need to add extra infos in beacon payload 
+    if(m_mlmeLLTransmissionState == FlagsField::ONLINE_STATE)
+    {
+        // NumOfBaseTsInSuperframe
+
+        // GroupAck Bitmap
+
+    }
+
+    beaconPacket->AddHeader(llMacPayload);
+    beaconPacket->AddHeader(llMacHeader);
 
     // Calculate FCS if the global attribute ChecksumEnable is set.
     if (Node::ChecksumEnabled())
@@ -1530,6 +1620,17 @@ LrWpanMac::GetPendingAddrFields()
     return pndAddrFields;
 }
 
+FlagsField
+LrWpanMac::GetFlagsField()
+{
+    FlagsField flagsField;
+    flagsField.SetTransmissionState(m_mlmeLLTransmissionState);
+    flagsField.SetTransmissionDirection(m_mlmeLLTransmissionDirection);
+    // reserved (bit-3) we dont set here
+    flagsField.SetTimeSlotPerMgmtTS(m_mlmeLLTimeSlotPerMgmtTS);
+
+    return flagsField;
+}
 void
 LrWpanMac::SetCsmaCa(Ptr<LrWpanCsmaCa> csmaCa)
 {
@@ -3251,6 +3352,54 @@ LrWpanMac::PlmeSetAttributeConfirm(LrWpanPhyEnumeration status, LrWpanPibAttribu
     }
 }
 
+void 
+LrWpanMac::SetMlmeLLDNTransmissionState(FlagsField::TransmissionState transmissionState)
+{
+    m_mlmeLLTransmissionState = transmissionState;
+}
+
+FlagsField::TransmissionState
+LrWpanMac::GetMlmeLLDNTransmissionState() const
+{
+    return m_mlmeLLTransmissionState;
+}
+
+void 
+LrWpanMac::SetMlmeLLDNTransmissionDirection(FlagsField::TransmissionDirection transmissionDirection)
+{
+    m_mlmeLLTransmissionDirection = transmissionDirection;
+}
+
+FlagsField::TransmissionDirection
+LrWpanMac::GetMlmeLLDNTransmissionDirection() const
+{
+    return m_mlmeLLTransmissionDirection;
+}
+
+void 
+LrWpanMac::SetMlmeLLDNTimeSlotPerMgmtTS(uint8_t timeSlotPerMgmtTS)
+{
+    m_mlmeLLTimeSlotPerMgmtTS = timeSlotPerMgmtTS;
+}
+
+uint8_t
+LrWpanMac::GetMlmeLLDNTimeSlotPerMgmtTS() const
+{
+    return m_mlmeLLTimeSlotPerMgmtTS;
+}
+
+void
+LrWpanMac::SetMlmeLLDNTimeslotSize(uint8_t maxTimeslotSize)
+{
+    m_mlmeLLTimeslotSize = maxTimeslotSize;
+}
+
+uint8_t
+LrWpanMac::GetMlmeLLDNTimeslotSize() const
+{
+    return m_mlmeLLTimeslotSize;
+}
+
 void
 LrWpanMac::SetLrWpanMacState(LrWpanMacState macState)
 {
@@ -3641,6 +3790,12 @@ LrWpanMac::GetIfsSize()
     {
         return m_macLIFSPeriod;
     }
+}
+
+void
+LrWpanMac::SetAssociatedCoor(Mac8Address mac)
+{
+    m_macCoordSimpleAddress = mac;
 }
 
 void

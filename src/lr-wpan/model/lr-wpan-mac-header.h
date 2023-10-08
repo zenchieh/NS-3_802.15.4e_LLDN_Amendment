@@ -494,6 +494,7 @@ class LrWpanLLMacHeader : public Header
     };
     
     LrWpanLLMacHeader();
+    LrWpanLLMacHeader(LrWpanMacType frameType, LrWpanSubMacType subframeType);
 
     /* Set Frame control field of LL frame MHR */
     void SetLLFrameType(LrWpanMacType frameType);
@@ -518,6 +519,8 @@ class LrWpanLLMacHeader : public Header
     /* Set Sequence number field of LL frame MHR */
     uint8_t GetSeqNum() const;
 
+    bool isSecEnable() const;
+
     static TypeId GetTypeId();
     TypeId GetInstanceTypeId() const override;
     void Print(std::ostream& os) const override;
@@ -537,6 +540,7 @@ class LrWpanLLMacHeader : public Header
 
     /* Sequence Number */
     uint8_t m_SeqNum; //!< Sequence Number (1 Octet)
+                      //!< Note, only present only if the Security Enabled field is set to one.
 
     /* Auxiliary Security Header - See - See IEEE-802.15.4e section 7.4  - 0, 5, 6, 10 or 14 Octets */
     // uint8_t m_auxSecCtrl;              // 1 Octet see below

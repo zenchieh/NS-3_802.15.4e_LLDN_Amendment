@@ -371,7 +371,14 @@ typedef enum
 typedef enum
 {
     // TODO : Additional supporting information
-} LrWpanMlmeLLAdditionalInfo;
+} LrWpanMlmeLLDNAdditionalInfo;
+
+typedef enum
+{
+    MLME_LLDN_DISCOVERY_STATE = 0,
+    MLME_LLDN_CONFIGURATION_STATE = 0,
+    MLME_LLDN_ONLINE_STATE = 0,
+} LrWpanMlmeLLDNTransmissionState;
 
 /**
  * \ingroup lr-wpan
@@ -810,7 +817,7 @@ struct MlmeLLDNOnlineRequestParams
 struct MlmeLLDNOnlineIndicationParams
 {
     LrWpanMlmeLLDNOnlineIndicationStatus m_status;
-    LrWpanMlmeLLAdditionalInfo m_additionalIndo;
+    LrWpanMlmeLLDNAdditionalInfo m_additionalIndo;
 };
 
 /**
@@ -1084,6 +1091,13 @@ class LrWpanMac : public Object
      * \param params the request parameters
      */
     void MlmeStartRequest(MlmeStartRequestParams params);
+
+    /**
+     * There is no DiscoveryStart primitives in spec.
+     * This is a self design flow for starting LLDN PAN-C Discovery flow.
+     * See IEEE-802.15.4e section 5.1.9.2
+     */
+    void MlmeLLDiscoveryStart();
 
     /**
      * IEEE 802.15.4-2011, section 6.2.10.1
@@ -1432,6 +1446,12 @@ class LrWpanMac : public Object
      * of the association response (failure of the association: NO_DATA)
      */
     uint64_t m_assocRespCmdWaitTime;
+
+    /**
+     * The simple address of the coordinator through which the device is
+     * associated.
+     */
+    Mac8Address m_macCoordSimpleAddress;
 
     /**
      * The short address of the coordinator through which the device is
@@ -1842,6 +1862,27 @@ class LrWpanMac : public Object
      */
     bool m_macLLDNcoordinator;
 
+    uint8_t aMaxSIFIFrameSize;
+
+    //!< LLDN beacon payload FlgsField Params
+
+    FlagsField::TransmissionState m_mlmeLLTransmissionState;        
+                                        // Flags Field, Transmission State  (bit 1)
+                                        // See enum TransmissionState
+
+    FlagsField::TransmissionDirection m_mlmeLLTransmissionDirection;    
+                                        // Flags Field, Transmission Direction (bit 2) -  the transmission direction of all bidirectional timeslots during superframe
+                                        // 0 - the direction of all bidirectional timeslots is uplink
+                                        // 1 - the direction of all bidirectional timeslots is downlink
+
+    uint8_t m_mlmeLLTimeSlotPerMgmtTS;  // Flags Field, Number of Base Timeslots per Management Timeslot (bit 5-7)
+                                        // 0 - there is no mgmt timslot in superframe
+                                        // x - the number of base timeslots per management timeslot
+
+    uint8_t m_mlmeLLConfigurationSeq{0};
+    uint8_t m_mlmeLLTimeslotSize;
+    
+
     //!< Get & Set MAC PIB attributes
 
     /**
@@ -1874,6 +1915,31 @@ class LrWpanMac : public Object
      * Set LLDN mode disabled.
      */
     void SetLLDNModeDisabled();
+
+    /**
+     * Set & GET LLDN transmission state.
+     */
+    void SetMlmeLLDNTransmissionState(FlagsField::TransmissionState transmissionState);
+    FlagsField::TransmissionState GetMlmeLLDNTransmissionState() const;
+
+    /**
+     * Set & GET LLDN transmission direction.
+     */
+    void SetMlmeLLDNTransmissionDirection(FlagsField::TransmissionDirection transmissionDirection);
+    FlagsField::TransmissionDirection GetMlmeLLDNTransmissionDirection() const;
+
+    /**
+     * Set & GET LLDN Number of Base Timeslots per Management Timeslot - two timeslot for UP & DL
+     */
+    void SetMlmeLLDNTimeSlotPerMgmtTS(uint8_t timeSlotPerMgmtTS);
+    uint8_t GetMlmeLLDNTimeSlotPerMgmtTS() const;
+
+    /**
+     * Set & GET LLDN maximum timeslot size in octect.
+     */
+    void SetMlmeLLDNTimeslotSize(uint8_t maxTimeslotSize);
+    uint8_t GetMlmeLLDNTimeslotSize() const;
+
 
     /**
      * Get the macAckWaitDuration attribute value.
@@ -1913,6 +1979,13 @@ class LrWpanMac : public Object
     void SetNotCoordinator();
 
     bool IsCoord() const;
+
+    /**
+     * Check if the packet destination is its coordinator
+     *
+     *\param mac The coordinator simple MAC Address
+     */
+    void SetAssociatedCoor(Mac8Address mac);
 
     /**
      * Check if the packet destination is its coordinator
@@ -2012,6 +2085,11 @@ class LrWpanMac : public Object
      * Called to send a single beacon frame.
      */
     void SendOneBeacon();
+
+    /**
+     * Called to send a single beacon frame.
+     */
+    void SendOneLLBeacon();
 
     /**
      * Called to send an associate request command.
@@ -2206,6 +2284,8 @@ class LrWpanMac : public Object
      * \returns the Pending Address Fields
      */
     PendingAddrFields GetPendingAddrFields();
+
+    FlagsField GetFlagsField();
 
     /**
      * The trace source is fired at the end of any Interframe Space (IFS).

@@ -757,8 +757,23 @@ LrWpanLLMacHeader::LrWpanLLMacHeader()
     SetLLFrameType(LRWPAN_LLDN);
     SetSecDisable();
     SetFrameVersion(0); // check 802.15.4e section 5.2.3
-    SetNoAckReq();
+    SetAckReq();
     SetSubFrameType(LL_DATA); // Assume Data frame
+}
+
+LrWpanLLMacHeader::LrWpanLLMacHeader(LrWpanMacType frameType, LrWpanSubMacType subframeType)
+{
+    SetLLFrameType(frameType);
+    SetSecDisable();
+    SetFrameVersion(0); // check 802.15.4e section 5.2.3
+    SetAckReq();
+    SetSubFrameType(subframeType); // Assume Data frame
+}
+
+bool
+LrWpanLLMacHeader::isSecEnable() const
+{
+    return (m_fctrlSecU == 1);
 }
 
 void 
@@ -894,13 +909,15 @@ void
 LrWpanLLMacHeader::Serialize(Buffer::Iterator start) const
 {
     Buffer::Iterator i = start;
-    uint16_t frameControl = GetFrameControl();
-    i.WriteHtolsbU16(frameControl);
-    i.WriteU8(GetSeqNum());
+    uint8_t frameControl = GetFrameControl();
+    //i.WriteHtolsbU16(frameControl);
+    i.WriteU8(frameControl);
 
-    if (GetSecEnable())
+
+    if (isSecEnable())
     {
         //!< we dont enable security here, pedding
+        i.WriteU8(GetSeqNum());
         // i.WriteU8(GetSecControl());
         // i.WriteHtolsbU32(GetFrmCounter());
 
@@ -927,13 +944,14 @@ uint32_t
 LrWpanLLMacHeader::Deserialize(Buffer::Iterator start)
 {
     Buffer::Iterator i = start;
-    uint16_t frameControl = i.ReadLsbtohU16();
+    uint8_t frameControl = i.ReadU8();
     SetFrameControl(frameControl);
 
-    SetSeqNum(i.ReadU8());
+
     
     if (GetSecEnable())
     {
+        SetSeqNum(i.ReadU8());
         //!< we dont enable security here, pedding
         // SetSecControl(i.ReadU8());
         // SetFrmCounter(i.ReadLsbtohU32());
@@ -961,32 +979,37 @@ LrWpanLLMacHeader::GetSerializedSize() const
 {
     /*
      * Each mac header will have
-     * Frame Control      : 2 octet
-     * Sequence Number    : 1 Octet
+     * Frame Control      : 1 octet
+     * Sequence Number    : 0/1 Octet
      * Aux Sec Header     : 0/5/6/10/14 octet
      */
 
-    uint32_t size = 3;
+    uint32_t size = 0;
 
     // check if security is enabled
-    if (GetSecEnable())
+    if (isSecEnable())
     {
-        //!< we dont enable security here, pedding
-        // size += 5;
-        // switch (m_secctrlKeyIdMode)
-        // {
-        // case IMPLICIT:
-        //     break;
-        // case NOKEYSOURCE:
-        //     size += 1;
-        //     break;
-        // case SHORTKEYSOURCE:
-        //     size += 5;
-        //     break;
-        // case LONGKEYSOURCE:
-        //     size += 9;
-        //     break;
-        // }
+            //!< we dont enable security here, pedding
+            // size += 5;
+            // switch (m_secctrlKeyIdMode)
+            // {
+            // case IMPLICIT:
+            //     break;
+            // case NOKEYSOURCE:
+            //     size += 1;
+            //     break;
+            // case SHORTKEYSOURCE:
+            //     size += 5;
+            //     break;
+            // case LONGKEYSOURCE:
+            //     size += 9;
+            //     break;
+            // }
+            size = 2;
+    }
+    else
+    {
+        size = 1;
     }
     return (size);
 }

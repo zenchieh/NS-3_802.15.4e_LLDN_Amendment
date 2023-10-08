@@ -253,7 +253,11 @@ void
 LrWpanNetDevice::SetAddress(Address address)
 {
     NS_LOG_FUNCTION(this);
-    if (Mac16Address::IsMatchingType(address))
+    if(Mac8Address::IsMatchingType(address))
+    {
+        m_mac->SetSimpleAddress(Mac8Address::ConvertFrom(address));
+    }
+    else if (Mac16Address::IsMatchingType(address))
     {
         m_mac->SetShortAddress(Mac16Address::ConvertFrom(address));
     }
